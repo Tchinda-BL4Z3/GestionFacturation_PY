@@ -1,0 +1,214 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>{% block title %}SUPER-FACTU | Admin{% endblock title %}</title>
+    
+    <!-- Scripts & Fonts -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "electric-blue": "#2563eb",
+                        "neon-blue": "#00f2ff",
+                        "background-dark": "#0a0a0c",
+                        "surface-dark": "#161b22",
+                        "border-dark": "#2d333b",
+                    },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #0a0a0c;
+            background-image: 
+                linear-gradient(to bottom, rgba(10, 10, 12, 0.9), rgba(10, 10, 12, 0.98)),
+                url("{% static 'img/fond_supermarche.jpeg' %}");
+            background-attachment: fixed;
+            background-size: cover;
+        }
+
+        .neon-glow { 
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1); 
+            border: 1px solid rgba(0, 242, 255, 0.2); 
+        }
+
+        /* Menu Actif - Design Premium */
+        .sidebar-item-active { 
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.15) 0%, transparent 100%); 
+            border-left: 4px solid #2563eb; 
+            color: white !important; 
+            font-weight: 800; 
+        }
+
+        /* Scrollbar Personnalisée */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #2d333b; border-radius: 10px; }
+        
+        /* Flou du Modal */
+        .modal-backdrop {
+            background: rgba(10, 10, 12, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+    {% block extra_style %}{% endblock %}
+</head>
+<body class="text-white antialiased font-display flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR (Barre Latérale) -->
+    <aside class="w-64 bg-surface-dark/40 backdrop-blur-xl border-r border-border-dark flex flex-col h-full shrink-0">
+        <!-- Logo -->
+        <div class="p-6 flex items-center gap-3">
+            <div class="size-9 bg-electric-blue rounded-lg flex items-center justify-center text-white shadow-lg shadow-electric-blue/30">
+                <span class="material-symbols-outlined text-2xl">storefront</span>
+            </div>
+            <h1 class="text-white text-lg font-extrabold tracking-tight italic">SUPER-FACTU</h1>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+            <a class="flex items-center gap-3 px-4 py-3 transition-all rounded group {% if active_menu == 'dashboard' %}sidebar-item-active{% else %}text-slate-400 hover:text-white hover:bg-white/5{% endif %}" 
+               href="{% url 'dashboard_admin' %}">
+                <span class="material-symbols-outlined text-[22px]">dashboard</span>
+                <span class="text-sm">Tableau de bord</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 transition-all rounded group {% if active_menu == 'ventes' %}sidebar-item-active{% else %}text-slate-400 hover:text-white hover:bg-white/5{% endif %}" 
+               href="{% url 'ventes_admin' %}">
+                <span class="material-symbols-outlined text-[22px]">shopping_cart</span>
+                <span class="text-sm">Ventes</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 transition-all rounded group {% if active_menu == 'stocks' %}sidebar-item-active{% else %}text-slate-400 hover:text-white hover:bg-white/5{% endif %}" 
+               href="{% url 'stocks_admin' %}">
+                <span class="material-symbols-outlined text-[22px]">inventory_2</span>
+                <span class="text-sm">Stocks</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 transition-all rounded group {% if active_menu == 'utilisateurs' %}sidebar-item-active{% else %}text-slate-400 hover:text-white hover:bg-white/5{% endif %}" 
+               href="{% url 'utilisateurs_admin' %}">
+                <span class="material-symbols-outlined text-[22px]">badge</span>
+                <span class="text-sm">Utilisateurs</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded group" href="#">
+                <span class="material-symbols-outlined text-[22px]">group</span>
+                <span class="text-sm font-medium">Clients</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded group" href="#">
+                <span class="material-symbols-outlined text-[22px]">receipt_long</span>
+                <span class="text-sm font-medium">Facturations</span>
+            </a>
+        </nav>
+
+        <!-- Profil & Déconnexion -->
+        <div class="mt-auto p-4 border-t border-white/5">
+            <div class="p-4 bg-white/5 rounded-2xl border border-white/5 mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="size-10 rounded-full bg-electric-blue/20 text-electric-blue flex items-center justify-center font-bold text-sm border border-electric-blue/30">
+                        {{ request.user.username|slice:":2"|upper|default:"AD" }}
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-xs font-bold text-white truncate">{{ request.user.get_full_name|default:"Admin Principal" }}</p>
+                        <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest truncate">{{ request.user.email|default:"admin@super-factu.com" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="toggleLogoutModal()" class="w-full flex items-center gap-3 px-5 py-4 text-red-400 hover:bg-red-500/10 transition-all rounded-xl group border border-transparent hover:border-red-500/20">
+                <span class="material-symbols-outlined text-[22px] group-hover:rotate-12 transition-transform">logout</span>
+                <span class="text-sm font-bold uppercase tracking-wider">Déconnexion</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT (Contenu Principal) -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <!-- Barre de titre supérieure -->
+        <header class="h-16 border-b border-border-dark flex items-center justify-between px-8 shrink-0 bg-background-dark/40 backdrop-blur-md">
+            <h2 class="text-lg font-bold tracking-tight">{% block header_title %}Tableau de Bord{% endblock %}</h2>
+            
+            <div class="flex items-center gap-6">
+                <!-- Notifications -->
+                <div class="relative group cursor-pointer">
+                    <span class="material-symbols-outlined text-slate-400 group-hover:text-white transition-colors">notifications</span>
+                    <span class="absolute -top-1 -right-1 size-2 bg-red-600 rounded-full border-2 border-background-dark"></span>
+                </div>
+                
+                <div class="h-8 w-px bg-border-dark"></div>
+                
+                <!-- Date dynamique -->
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] leading-none mb-1">Aujourd'hui</p>
+                    <p class="text-xs font-bold text-white italic">{% now "d F Y" %}</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Zone de défilement du contenu -->
+        <div class="flex-1 overflow-y-auto">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- FENÊTRE DE CONFIRMATION (MODAL GLOBAL) -->
+    <div id="logoutModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center px-4">
+        <div class="absolute inset-0 modal-backdrop" onclick="toggleLogoutModal()"></div>
+        <div class="relative w-full max-w-sm bg-surface-dark p-8 rounded-3xl border border-white/10 text-center shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div class="size-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span class="material-symbols-outlined text-4xl">logout</span>
+            </div>
+            <h3 class="text-xl font-extrabold text-white mb-2 tracking-tight uppercase italic">Quitter la session ?</h3>
+            <p class="text-slate-400 text-sm mb-8">Voulez-vous vraiment vous déconnecter du panneau administrateur ?</p>
+            
+            <div class="flex gap-4">
+                <button onclick="toggleLogoutModal()" class="flex-1 py-4 rounded-xl bg-white/5 text-slate-300 font-bold hover:bg-white/10 transition-all border border-white/5 uppercase text-xs tracking-widest">
+                    Annuler
+                </button>
+                <a href="{% url 'logout' %}" class="flex-1 py-4 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-all shadow-lg shadow-red-600/30 uppercase text-xs tracking-widest">
+                    Confirmer
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DU MODAL -->
+    <script>
+        function toggleLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            if (modal) {
+                modal.classList.toggle('hidden');
+            }
+        }
+
+        // Fermeture avec la touche Échap
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('logoutModal');
+                if (!modal.classList.contains('hidden')) {
+                    toggleLogoutModal();
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

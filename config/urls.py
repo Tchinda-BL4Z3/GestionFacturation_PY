@@ -21,6 +21,6 @@ from django.contrib.auth import views as auth_views
 from facturation.views import home
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('', include('facturation.urls')),
+    path('django-admin/', admin.site.urls),
 ]

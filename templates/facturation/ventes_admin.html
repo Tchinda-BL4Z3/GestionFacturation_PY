@@ -1,0 +1,151 @@
+{% extends 'layouts/adminLayout.html' %}
+{% load static %}
+
+{% block title %}SUPER-FACTU | Suivi des Ventes{% endblock %}
+
+{% block extra_style %}
+<style>
+    body {
+        background-image: 
+            linear-gradient(to bottom, rgba(10, 10, 12, 0.9), rgba(10, 10, 12, 0.98)),
+            url("{% static 'img/fond_supermarche.jpeg' %}");
+        background-attachment: fixed;
+        background-size: cover;
+    }
+    .neon-glow {
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.05);
+        border: 1px solid rgba(0, 242, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block header_title %}Suivi des Ventes Globales{% endblock %}
+
+{% block content %}
+<div class="flex-1 p-8">
+    <!-- STATS CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div class="neon-glow bg-surface-dark/80 backdrop-blur-md p-6 rounded-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Panier Moyen</span>
+                <span class="material-symbols-outlined text-neon-blue">shopping_basket</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-3xl font-extrabold text-white">{{ panier_moyen|floatformat:0 }} <span class="text-xs font-normal text-slate-500">FCFA</span></span>
+                <span class="text-[11px] text-emerald-400 mt-1 font-bold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">analytics</span> Moyenne par facture
+                </span>
+            </div>
+        </div>
+
+        <div class="neon-glow bg-surface-dark/80 backdrop-blur-md p-6 rounded-2xl border-l-4 border-l-electric-blue">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Record de Vente</span>
+                <span class="material-symbols-outlined text-neon-blue">trophy</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-3xl font-extrabold text-white">{{ vente_max|floatformat:0 }} <span class="text-xs font-normal text-slate-500">FCFA</span></span>
+                <span class="text-[11px] text-slate-400 mt-1 font-bold italic">Plus grosse transaction</span>
+            </div>
+        </div>
+
+        <div class="neon-glow bg-surface-dark/80 backdrop-blur-md p-6 rounded-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Transactions Totales</span>
+                <span class="material-symbols-outlined text-neon-blue">receipt_long</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-3xl font-extrabold text-white">{{ transactions.count }}</span>
+                <span class="text-[11px] text-emerald-400 mt-1 font-bold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">history</span> Historique complet
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLEAU DES TRANSACTIONS -->
+    <div class="bg-surface-dark/80 backdrop-blur-md rounded-2xl border border-border-dark overflow-hidden shadow-2xl">
+        <div class="p-6 border-b border-border-dark flex flex-col md:flex-row items-center justify-between gap-4">
+            <h3 class="font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-electric-blue">history</span>
+                Historique des Transactions
+            </h3>
+            
+            <div class="flex gap-3 w-full md:w-auto">
+                <form method="GET" class="relative flex-1 md:w-64">
+                    <input name="search" value="{{ request.GET.search }}" class="w-full bg-background-dark/50 border-border-dark rounded-xl text-xs py-2.5 pl-10 pr-4 focus:ring-electric-blue focus:border-electric-blue text-white outline-none" placeholder="Rechercher N° Facture..." type="text"/>
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">search</span>
+                </form>
+                <button class="bg-white/5 hover:bg-white/10 border border-border-dark rounded-xl px-4 py-2 text-xs font-bold flex items-center gap-2 transition-all">
+                    <span class="material-symbols-outlined text-sm">filter_list</span> Filtrer
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-border-dark bg-black/40">
+                        <th class="px-6 py-4 font-bold">ID Transaction</th>
+                        <th class="px-6 py-4 font-bold">Date & Heure</th>
+                        <th class="px-6 py-4 font-bold">Caissier</th>
+                        <th class="px-6 py-4 font-bold text-right">Montant TTc</th>
+                        <th class="px-6 py-4 font-bold text-center">Paiement</th>
+                        <th class="px-6 py-4 font-bold text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border-dark">
+                    {% for trans in transactions %}
+                    <tr class="hover:bg-white/[0.03] transition-colors">
+                        <td class="px-6 py-4 font-mono text-xs text-electric-blue font-bold">#{{ trans.numero_facture }}</td>
+                        <td class="px-6 py-4 text-xs font-medium">{{ trans.date_facture|date:"d M Y, H:i" }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <div class="size-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
+                                    {{ trans.utilisateur.username|slice:":2"|upper }}
+                                </div>
+                                <span class="text-xs">{{ trans.utilisateur.get_full_name|default:trans.utilisateur.username }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right font-bold text-white">{{ trans.montant_ttc|floatformat:0 }} FCFA</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="px-2 py-1 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-bold uppercase tracking-tight border border-emerald-500/20">
+                                {{ trans.mode_paiement }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button class="size-8 rounded-lg bg-white/5 text-slate-400 hover:text-white hover:bg-electric-blue transition-all">
+                                <span class="material-symbols-outlined text-lg">visibility</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-slate-500 italic">
+                            <span class="material-symbols-outlined text-4xl mb-2 opacity-20">cloud_off</span>
+                            <p>Aucune transaction enregistrée pour le moment.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- PAGINATION SIMPLE -->
+        <div class="p-4 border-t border-border-dark flex items-center justify-between bg-black/20">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                {{ transactions.count }} Résultat(s) trouvé(s)
+            </p>
+            <div class="flex gap-2">
+                <button class="size-8 rounded-lg border border-border-dark flex items-center justify-center hover:bg-white/5 disabled:opacity-30" disabled>
+                    <span class="material-symbols-outlined text-sm">chevron_left</span>
+                </button>
+                <button class="size-8 rounded-lg bg-electric-blue flex items-center justify-center text-xs font-bold shadow-lg shadow-electric-blue/20">1</button>
+                <button class="size-8 rounded-lg border border-border-dark flex items-center justify-center hover:bg-white/5">
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

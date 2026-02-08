@@ -1,0 +1,198 @@
+{% extends 'layouts/adminLayout.html' %}
+{% load static %}
+
+{% block title %}SUPER-FACTU | Gestion du Personnel{% endblock %}
+
+{% block extra_style %}
+<style type="text/tailwindcss">
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+        font-family: 'Manrope', sans-serif;
+        background-image: 
+            linear-gradient(to bottom, rgba(10, 10, 12, 0.9), rgba(10, 10, 12, 0.98)),
+            url("{% static 'img/fond_supermarche.jpeg' %}");
+        background-attachment: fixed;
+        background-size: cover;
+    }
+    .neon-glow {
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+        border: 1px solid rgba(0, 242, 255, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="flex-1 flex flex-col overflow-hidden">
+    <!-- HEADER -->
+    <header class="h-16 border-b border-border-dark flex items-center justify-between px-8 shrink-0 bg-background-dark/50 backdrop-blur-sm">
+        <div class="flex items-center gap-4">
+            <h2 class="text-lg font-bold">Gestion des Utilisateurs</h2>
+            <span class="px-2 py-0.5 rounded bg-electric-blue/10 text-electric-blue text-[10px] font-bold border border-electric-blue/20 uppercase tracking-widest">
+                Équipe : {{ utilisateurs.count }} Membres
+            </span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="relative group">
+                <input class="bg-surface-dark border-border-dark rounded-lg text-xs py-2 pl-9 pr-4 w-64 focus:ring-electric-blue focus:border-electric-blue transition-all outline-none text-white" placeholder="Rechercher un membre..." type="text"/>
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg">search</span>
+            </div>
+            <a href="/admin/auth/user/add/" class="bg-electric-blue hover:bg-blue-600 text-white text-xs font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-electric-blue/20">
+                <span class="material-symbols-outlined text-sm">person_add</span>
+                Ajouter un utilisateur
+            </a>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-hidden flex">
+        <!-- LISTE DES UTILISATEURS -->
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="bg-surface-dark/80 backdrop-blur-md rounded-2xl border border-border-dark overflow-hidden shadow-2xl">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-border-dark bg-black/40">
+                            <th class="px-6 py-4 font-bold">Utilisateur</th>
+                            <th class="px-6 py-4 font-bold">Rôle</th>
+                            <th class="px-6 py-4 font-bold">Statut</th>
+                            <th class="px-6 py-4 font-bold">Dernière Connexion</th>
+                            <th class="px-6 py-4 font-bold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border-dark">
+                        {% for user in utilisateurs %}
+                        <tr class="hover:bg-white/[0.03] transition-colors group">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="size-9 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                                        {{ user.username|slice:":2"|upper }}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-white">{{ user.get_full_name|default:user.username }}</p>
+                                        <p class="text-[10px] text-slate-500">{{ user.email }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-xs font-medium text-slate-300">
+                                    {% if user.is_superuser %}Administrateur{% else %}Personnel / Caissier{% endif %}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    {% if user.is_active %}
+                                        <span class="size-2 rounded-full bg-emerald-500 {% if user.last_login and user.last_login > now|date:'Y-m-d H:i' %}animate-pulse{% endif %}"></span>
+                                        <span class="text-xs text-emerald-400 font-medium">Actif</span>
+                                    {% else %}
+                                        <span class="size-2 rounded-full bg-red-500"></span>
+                                        <span class="text-xs text-red-400 font-medium">Suspendu</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-xs text-slate-500">
+                                    {{ user.last_login|date:"d M, H:i"|default:"Jamais" }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <a href="/admin/auth/user/{{ user.id }}/change/" class="p-1 hover:text-electric-blue text-slate-500 transition-colors">
+                                    <span class="material-symbols-outlined text-xl">settings</span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- JOURNAL DE TRAÇABILITÉ RÉEL -->
+            <div class="mt-8">
+                <h3 class="font-bold text-sm mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400 text-lg">history</span>
+                    Journal de traçabilité des actions (Admin)
+                </h3>
+                <div class="bg-surface-dark/60 backdrop-blur-md border border-border-dark rounded-xl p-6 space-y-4 shadow-xl">
+                    {% for log in logs %}
+                    <div class="flex items-start gap-4 pb-4 border-b border-border-dark/50 last:border-0 last:pb-0">
+                        <div class="size-8 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-primary text-sm">
+                                {% if log.is_addition %}add_circle{% elif log.is_change %}edit{% else %}delete{% endif %}
+                            </span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs font-bold">{{ log.get_action_flag_display }}</p>
+                            <p class="text-[10px] text-slate-400">
+                                <span class="text-electric-blue font-bold">{{ log.user.username }}</span> 
+                                a modifié : {{ log.object_repr }} ({{ log.content_type }})
+                            </p>
+                        </div>
+                        <span class="text-[10px] text-slate-500 font-medium">{{ log.action_time|timesince }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-slate-500 italic">Aucune action enregistrée dans le journal.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ASIDE DROIT : PERMISSIONS & SECURITÉ -->
+        <aside class="w-80 bg-surface-dark/90 backdrop-blur-xl border-l border-border-dark overflow-y-auto p-6 flex flex-col gap-8">
+            <div>
+                <h3 class="text-sm font-bold mb-6 flex items-center justify-between">
+                    <span>Permissions Globales</span>
+                    <span class="material-symbols-outlined text-slate-500 text-lg">admin_panel_settings</span>
+                </h3>
+                <div class="space-y-4">
+                    {% comment %} Ces switches sont représentatifs des réglages du groupe Personnel {% endcomment %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-300">Accès aux rapports</span>
+                        <div class="w-8 h-4 bg-electric-blue rounded-full relative"><div class="size-3 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div></div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-300">Modifier les stocks</span>
+                        <div class="w-8 h-4 bg-electric-blue rounded-full relative"><div class="size-3 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div></div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-300">Clôture de caisse</span>
+                        <div class="w-8 h-4 bg-electric-blue rounded-full relative"><div class="size-3 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm"></div></div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-slate-300">Suppression factures</span>
+                        <div class="w-8 h-4 bg-slate-700 rounded-full relative"><div class="size-3 bg-white rounded-full absolute top-0.5 left-0.5 shadow-sm"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-8 border-t border-border-dark">
+                <h3 class="text-sm font-bold mb-4">Actions de sécurité</h3>
+                <div class="space-y-3">
+                    <button class="w-full text-left p-3 rounded-lg bg-white/5 border border-white/5 hover:border-electric-blue/30 transition-all group">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-electric-blue text-lg">lock_reset</span>
+                            <span class="text-xs font-bold">Réinitialiser accès</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-1">Générer un nouveau mot de passe temporaire.</p>
+                    </button>
+                    <button class="w-full text-left p-3 rounded-lg bg-white/5 border border-white/5 hover:border-red-500/30 transition-all group">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-red-500 text-lg">no_accounts</span>
+                            <span class="text-xs font-bold text-red-400">Suspendre membre</span>
+                        </div>
+                        <p class="text-[10px] text-slate-500 mt-1">Interdire l'accès immédiat au système.</p>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-auto bg-neon-blue/5 border border-neon-blue/20 rounded-xl p-4">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="material-symbols-outlined text-neon-blue text-lg">info</span>
+                    <span class="text-xs font-bold text-neon-blue">Audit de sécurité</span>
+                </div>
+                <p class="text-[10px] text-slate-400 leading-relaxed italic">
+                    "Conformément au cahier des charges (page 12), toute action sensible est tracée par utilisateur pour garantir l'intégrité des données."
+                </p>
+            </div>
+        </aside>
+    </div>
+</main>
+{% endblock %}

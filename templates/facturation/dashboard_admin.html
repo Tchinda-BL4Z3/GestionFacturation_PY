@@ -1,0 +1,168 @@
+{% extends 'layouts/adminLayout.html' %}
+
+{% block title %}SUPER-FACTU | Dashboard Admin{% endblock %}
+{% block header_title %}Tableau de Bord Administrateur{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <!-- STATS CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Chiffre d'Affaires -->
+        <div class="neon-glow bg-surface-dark/60 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Chiffre d'affaires</span>
+                <span class="material-symbols-outlined text-neon-blue">payments</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-3xl font-extrabold text-white">{{ total_ca|floatformat:0 }} <span class="text-sm font-normal text-slate-400">FCFA</span></span>
+                <span class="text-[11px] text-emerald-400 mt-1 font-bold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">trending_up</span> Cumul global
+                </span>
+            </div>
+        </div>
+        
+        <!-- Transactions -->
+        <div class="neon-glow bg-surface-dark/60 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Transactions</span>
+                <span class="material-symbols-outlined text-neon-blue">point_of_sale</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-3xl font-extrabold text-white">{{ total_transactions }}</span>
+                <span class="text-[11px] text-slate-400 mt-1 font-bold flex items-center gap-1">
+                    Factures éditées
+                </span>
+            </div>
+        </div>
+
+        <!-- Stock Critique -->
+        <div class="neon-glow bg-surface-dark/60 p-6 rounded-2xl backdrop-blur-sm {% if stock_critique > 0 %}border-l-4 border-l-red-500 border-y-white/5 border-r-white/5{% else %}border border-white/5{% endif %}">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold {% if stock_critique > 0 %}text-red-400{% else %}text-slate-400{% endif %} uppercase tracking-widest">Stock Critique</span>
+                <span class="material-symbols-outlined {% if stock_critique > 0 %}text-red-500{% else %}text-neon-blue{% endif %}">warning</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-3xl font-extrabold text-white">{{ stock_critique }}</span>
+                <span class="text-[11px] {% if stock_critique > 0 %}text-red-400{% else %}text-slate-400{% endif %} mt-1 font-bold">Produits en alerte</span>
+            </div>
+        </div>
+
+        <!-- Clients -->
+        <div class="neon-glow bg-surface-dark/60 p-6 rounded-2xl border border-white/5 backdrop-blur-sm">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Clients Actifs</span>
+                <span class="material-symbols-outlined text-neon-blue">person_add</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-3xl font-extrabold text-white">{{ total_clients }}</span>
+                <span class="text-[11px] text-slate-500 mt-1 font-bold uppercase">Base de données</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- TABLE TOP PRODUITS -->
+        <div class="lg:col-span-2 bg-surface-dark/60 rounded-3xl border border-white/5 overflow-hidden flex flex-col backdrop-blur-md shadow-2xl">
+            <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+                <h3 class="font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-electric-blue">analytics</span>
+                    Top 5 Produits Vendus
+                </h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-white/5 bg-black/40">
+                            <th class="px-6 py-4 font-bold">Produit</th>
+                            <th class="px-6 py-4 font-bold text-center">Quantité</th>
+                            <th class="px-6 py-4 font-bold text-right">Revenue (FCFA)</th>
+                            <th class="px-6 py-4 font-bold text-center">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for p in top_produits %}
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4">
+                                <span class="font-bold text-white">{{ p.article__nom }}</span>
+                            </td>
+                            <td class="px-6 py-4 text-center font-medium">{{ p.qty_vendue|floatformat:0 }}</td>
+                            <td class="px-6 py-4 text-right font-mono font-bold text-neon-blue">{{ p.revenue|floatformat:0 }}</td>
+                            <td class="px-6 py-4 text-center">
+                                {% if p.article__stock_actuel <= p.article__stock_minimum %}
+                                    <span class="px-2 py-1 rounded text-[9px] bg-red-500/10 text-red-400 font-black uppercase tracking-tighter border border-red-500/20">Critique</span>
+                                {% else %}
+                                    <span class="px-2 py-1 rounded text-[9px] bg-emerald-500/10 text-emerald-400 font-black uppercase tracking-tighter border border-emerald-500/20">Optimal</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-slate-500 italic">Aucune donnée de vente disponible</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ACTIVITÉS RÉCENTES -->
+        <div class="space-y-6">
+            <div class="bg-surface-dark/60 rounded-3xl border border-white/5 p-6 backdrop-blur-md shadow-2xl">
+                <h3 class="font-bold mb-6 text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-amber-500">bolt</span>
+                    Ventes Récentes
+                </h3>
+                <div class="space-y-6">
+                    {% for act in activites %}
+                    <div class="flex gap-4 group">
+                        <div class="size-2 rounded-full {% if act.statut == 'valide' %}bg-electric-blue shadow-[0_0_8px_#2563eb]{% else %}bg-red-500 shadow-[0_0_8px_#ef4444]{% endif %} mt-2 shrink-0"></div>
+                        <div>
+                            <p class="text-xs font-bold text-white group-hover:text-electric-blue transition-colors">{{ act.numero_facture }} - {{ act.montant_ttc|floatformat:0 }} FCFA</p>
+                            <p class="text-[10px] text-slate-500 font-medium">{{ act.date_facture|date:"H:i" }} • Par {{ act.utilisateur.username }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-xs text-slate-500 italic text-center py-4">Aucune activité récente</p>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'ventes_admin' %}" class="block w-full mt-8 py-3.5 text-center rounded-xl bg-white/5 border border-white/5 text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all">
+                    Voir tout le journal
+                </a>
+            </div>
+
+            <!-- Support Box -->
+            <div class="bg-gradient-to-br from-primary/20 to-transparent rounded-3xl border border-primary/20 p-6 flex items-center gap-4 shadow-xl">
+                <div class="size-12 bg-primary/20 rounded-2xl flex items-center justify-center text-primary border border-primary/30">
+                    <span class="material-symbols-outlined text-2xl">support_agent</span>
+                </div>
+                <div>
+                    <p class="text-xs font-extrabold text-white uppercase tracking-tight">Support Technique</p>
+                    <p class="text-[10px] text-slate-400 font-medium">Disponible 24h/24 • POS v2.4</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Le modal est déjà géré par le adminLayout.html, 
+    // mais nous assurons ici la liaison si nécessaire.
+    function toggleLogoutModal() {
+        const modal = document.getElementById('logoutModal');
+        if (modal) {
+            modal.classList.toggle('hidden');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Cibler tous les liens de déconnexion possibles dans la page
+        const logoutBtns = document.querySelectorAll('.logout-trigger');
+        logoutBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                toggleLogoutModal();
+            });
+        });
+    });
+</script>
+{% endblock content %}
