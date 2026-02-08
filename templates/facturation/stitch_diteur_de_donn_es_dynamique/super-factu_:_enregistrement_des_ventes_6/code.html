@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SUPER-FACTU | Historique de Facturation Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "electric-blue": "#2563eb",
+                        "neon-blue": "#00f2ff",
+                        "background-dark": "#0a0a0c",
+                        "surface-dark": "#161b22",
+                        "border-dark": "#2d333b",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+        .sidebar-item-active {
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, transparent 100%);
+            border-left: 3px solid #2563eb;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d333b;
+            border-radius: 10px;
+        }
+        .table-row-hover:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white antialiased font-display selection:bg-primary/30 flex h-screen overflow-hidden">
+<aside class="w-64 bg-surface-dark border-r border-border-dark flex flex-col h-full shrink-0">
+<div class="p-6 flex items-center gap-3">
+<div class="size-8 bg-electric-blue rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-xl">storefront</span>
+</div>
+<h1 class="text-white text-lg font-extrabold tracking-tight">SUPER-FACTU</h1>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-sm font-medium">Tableau de bord</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+<span class="text-sm font-medium">Ventes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+<span class="text-sm font-medium">Stocks</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+<span class="text-sm font-medium">Utilisateurs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="text-sm font-medium">Clients</span>
+</a>
+<a class="sidebar-item-active flex items-center gap-3 px-4 py-3 text-electric-blue font-bold rounded-r" href="#">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+<span class="text-sm">Facturations</span>
+</a>
+</nav>
+<div class="p-4 border-t border-border-dark">
+<div class="flex items-center gap-3 p-2">
+<div class="size-8 rounded-full bg-slate-700 flex items-center justify-center text-[10px] font-bold">AD</div>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Admin Principal</p>
+<p class="text-[10px] text-slate-500 truncate">admin@superfactu.com</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col overflow-hidden">
+<header class="h-16 border-b border-border-dark flex items-center justify-between px-8 shrink-0 bg-background-dark/50 backdrop-blur-sm">
+<div class="flex items-center gap-4">
+<h2 class="text-lg font-bold">Historique de Facturation</h2>
+<span class="px-2 py-1 bg-white/5 border border-border-dark rounded text-[10px] font-bold text-slate-400 uppercase">Global Admin</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
+<span class="absolute -top-1 -right-1 size-2 bg-red-500 rounded-full border-2 border-background-dark"></span>
+</div>
+<div class="h-8 w-px bg-border-dark"></div>
+<div class="text-right">
+<p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">Aujourd'hui</p>
+<p class="text-xs font-bold text-white">24 Mai 2024</p>
+</div>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-8">
+<div class="bg-surface-dark border border-border-dark rounded-xl p-4 mb-6 flex flex-wrap items-center gap-4">
+<div class="flex-1 min-w-[240px] relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg">search</span>
+<input class="w-full bg-background-dark border-border-dark rounded text-sm pl-10 focus:ring-electric-blue focus:border-electric-blue text-white" placeholder="Rechercher N° Facture..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-500 uppercase">Période :</span>
+<input class="bg-background-dark border-border-dark rounded text-xs text-white px-3 py-1.5" type="date"/>
+<span class="text-slate-500 text-xs">au</span>
+<input class="bg-background-dark border-border-dark rounded text-xs text-white px-3 py-1.5" type="date"/>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs font-bold text-slate-500 uppercase">Caissier :</span>
+<select class="bg-background-dark border-border-dark rounded text-xs text-white px-3 py-1.5">
+<option>Tous les caissiers</option>
+<option>Jean Dupont</option>
+<option>Marie Curie</option>
+<option>Luc Martin</option>
+</select>
+</div>
+<button class="bg-electric-blue hover:bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                    Appliquer les filtres
+                </button>
+<button class="bg-white/5 border border-border-dark hover:bg-white/10 text-slate-300 text-xs font-bold px-4 py-2 rounded transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">restart_alt</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+<div class="bg-surface-dark border border-border-dark p-4 rounded-xl flex items-center justify-between">
+<div>
+<p class="text-[10px] text-slate-500 font-bold uppercase">Factures Total</p>
+<p class="text-2xl font-extrabold text-white">1,248</p>
+</div>
+<div class="size-10 bg-electric-blue/10 rounded flex items-center justify-center text-electric-blue">
+<span class="material-symbols-outlined">description</span>
+</div>
+</div>
+<div class="bg-surface-dark border border-border-dark p-4 rounded-xl flex items-center justify-between">
+<div>
+<p class="text-[10px] text-slate-500 font-bold uppercase">Chiffre d'Affaire (Période)</p>
+<p class="text-2xl font-extrabold text-white">42,650.00 €</p>
+</div>
+<div class="size-10 bg-emerald-500/10 rounded flex items-center justify-center text-emerald-500">
+<span class="material-symbols-outlined">payments</span>
+</div>
+</div>
+<div class="bg-surface-dark border border-border-dark p-4 rounded-xl flex items-center justify-between">
+<div>
+<p class="text-[10px] text-slate-500 font-bold uppercase">Factures Annulées</p>
+<p class="text-2xl font-extrabold text-white">14</p>
+</div>
+<div class="size-10 bg-red-500/10 rounded flex items-center justify-center text-red-500">
+<span class="material-symbols-outlined">cancel</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-dark rounded-2xl border border-border-dark overflow-hidden flex flex-col">
+<div class="p-6 border-b border-border-dark flex items-center justify-between">
+<h3 class="font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-electric-blue">list_alt</span>
+                        Dernières Factures Émises
+                    </h3>
+<div class="flex gap-2">
+<button class="bg-white/5 border border-border-dark hover:bg-white/10 text-xs font-bold px-3 py-1.5 rounded flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">download</span>
+                            Exporter CSV
+                        </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead>
+<tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-border-dark bg-background-dark/30">
+<th class="px-6 py-4 font-bold">N° Facture</th>
+<th class="px-6 py-4 font-bold">Date &amp; Heure</th>
+<th class="px-6 py-4 font-bold">Client</th>
+<th class="px-6 py-4 font-bold">Caissier</th>
+<th class="px-6 py-4 font-bold text-right">Montant TTC</th>
+<th class="px-6 py-4 font-bold text-center">Statut</th>
+<th class="px-6 py-4 font-bold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-dark">
+<tr class="table-row-hover transition-colors">
+<td class="px-6 py-4 font-bold text-electric-blue">#FAC-2024-0589</td>
+<td class="px-6 py-4">
+<p class="font-medium text-xs">24 Mai 2024</p>
+<p class="text-[10px] text-slate-500">14:35:12</p>
+</td>
+<td class="px-6 py-4">
+<p class="font-bold text-xs">Client Passage</p>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-slate-400">Jean Dupont</td>
+<td class="px-6 py-4 text-right font-mono font-bold">125.40 €</td>
+<td class="px-6 py-4 text-center">
+<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-bold">PAYÉ</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-1.5 hover:bg-blue-500/10 hover:text-blue-400 rounded text-slate-400 transition-colors" title="Prévisualiser">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="p-1.5 hover:bg-slate-500/10 hover:text-white rounded text-slate-400 transition-colors" title="Imprimer">
+<span class="material-symbols-outlined text-lg">print</span>
+</button>
+<button class="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded text-slate-400 transition-colors" title="Annuler">
+<span class="material-symbols-outlined text-lg">block</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="table-row-hover transition-colors">
+<td class="px-6 py-4 font-bold text-electric-blue">#FAC-2024-0588</td>
+<td class="px-6 py-4">
+<p class="font-medium text-xs">24 Mai 2024</p>
+<p class="text-[10px] text-slate-500">14:28:45</p>
+</td>
+<td class="px-6 py-4">
+<p class="font-bold text-xs">Ahmed Mansour</p>
+<p class="text-[9px] text-slate-500">Fidélité #8842</p>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-slate-400">Marie Curie</td>
+<td class="px-6 py-4 text-right font-mono font-bold">42.00 €</td>
+<td class="px-6 py-4 text-center">
+<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-bold">PAYÉ</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-1.5 hover:bg-blue-500/10 hover:text-blue-400 rounded text-slate-400 transition-colors" title="Prévisualiser">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="p-1.5 hover:bg-slate-500/10 hover:text-white rounded text-slate-400 transition-colors" title="Imprimer">
+<span class="material-symbols-outlined text-lg">print</span>
+</button>
+<button class="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded text-slate-400 transition-colors" title="Annuler">
+<span class="material-symbols-outlined text-lg">block</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="table-row-hover transition-colors bg-red-500/5">
+<td class="px-6 py-4 font-bold text-red-400">#FAC-2024-0587</td>
+<td class="px-6 py-4">
+<p class="font-medium text-xs">24 Mai 2024</p>
+<p class="text-[10px] text-slate-500">14:10:02</p>
+</td>
+<td class="px-6 py-4">
+<p class="font-bold text-xs">Client Passage</p>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-slate-400">Jean Dupont</td>
+<td class="px-6 py-4 text-right font-mono font-bold line-through text-slate-500">8.90 €</td>
+<td class="px-6 py-4 text-center">
+<span class="px-2 py-0.5 rounded text-[10px] bg-red-500/10 text-red-500 font-bold">ANNULÉ</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-1.5 hover:bg-blue-500/10 hover:text-blue-400 rounded text-slate-400 transition-colors" title="Prévisualiser">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="p-1.5 hover:bg-emerald-500/10 hover:text-emerald-500 rounded text-slate-400 transition-colors" title="Restaurer">
+<span class="material-symbols-outlined text-lg">history</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="table-row-hover transition-colors">
+<td class="px-6 py-4 font-bold text-electric-blue">#FAC-2024-0586</td>
+<td class="px-6 py-4">
+<p class="font-medium text-xs">24 Mai 2024</p>
+<p class="text-[10px] text-slate-500">13:55:30</p>
+</td>
+<td class="px-6 py-4">
+<p class="font-bold text-xs">Sophie Durand</p>
+<p class="text-[9px] text-slate-500">Fidélité #7512</p>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-slate-400">Luc Martin</td>
+<td class="px-6 py-4 text-right font-mono font-bold">312.15 €</td>
+<td class="px-6 py-4 text-center">
+<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-bold">PAYÉ</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<button class="p-1.5 hover:bg-blue-500/10 hover:text-blue-400 rounded text-slate-400 transition-colors" title="Prévisualiser">
+<span class="material-symbols-outlined text-lg">visibility</span>
+</button>
+<button class="p-1.5 hover:bg-slate-500/10 hover:text-white rounded text-slate-400 transition-colors" title="Imprimer">
+<span class="material-symbols-outlined text-lg">print</span>
+</button>
+<button class="p-1.5 hover:bg-red-500/10 hover:text-red-500 rounded text-slate-400 transition-colors" title="Annuler">
+<span class="material-symbols-outlined text-lg">block</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-border-dark flex items-center justify-between bg-background-dark/20">
+<p class="text-xs text-slate-500">Affichage de 1-4 sur 1,248 factures</p>
+<div class="flex items-center gap-1">
+<button class="p-2 border border-border-dark rounded bg-surface-dark hover:bg-white/5 text-slate-400">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="px-3 py-1 border border-electric-blue/50 rounded bg-electric-blue/10 text-electric-blue text-xs font-bold">1</button>
+<button class="px-3 py-1 border border-border-dark rounded bg-surface-dark hover:bg-white/5 text-slate-400 text-xs font-bold transition-colors">2</button>
+<button class="px-3 py-1 border border-border-dark rounded bg-surface-dark hover:bg-white/5 text-slate-400 text-xs font-bold transition-colors">3</button>
+<span class="px-2 text-slate-600">...</span>
+<button class="px-3 py-1 border border-border-dark rounded bg-surface-dark hover:bg-white/5 text-slate-400 text-xs font-bold transition-colors">312</button>
+<button class="p-2 border border-border-dark rounded bg-surface-dark hover:bg-white/5 text-slate-400">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

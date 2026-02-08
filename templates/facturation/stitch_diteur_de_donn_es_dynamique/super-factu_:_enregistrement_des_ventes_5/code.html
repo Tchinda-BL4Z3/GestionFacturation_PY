@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SUPER-FACTU | Base de Données Clients</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "electric-blue": "#2563eb",
+                        "neon-blue": "#00f2ff",
+                        "background-dark": "#0a0a0c",
+                        "surface-dark": "#161b22",
+                        "border-dark": "#2d333b",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+        .sidebar-item-active {
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, transparent 100%);
+            border-left: 3px solid #2563eb;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d333b;
+            border-radius: 10px;
+        }
+        .client-card:hover {
+            border-color: rgba(0, 242, 255, 0.4);
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white antialiased font-display selection:bg-primary/30 flex h-screen overflow-hidden">
+<aside class="w-64 bg-surface-dark border-r border-border-dark flex flex-col h-full shrink-0">
+<div class="p-6 flex items-center gap-3">
+<div class="size-8 bg-electric-blue rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-xl">storefront</span>
+</div>
+<h1 class="text-white text-lg font-extrabold tracking-tight">SUPER-FACTU</h1>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-sm font-medium">Tableau de bord</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">shopping_cart</span>
+<span class="text-sm font-medium">Ventes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+<span class="text-sm font-medium">Stocks</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">badge</span>
+<span class="text-sm font-medium">Utilisateurs</span>
+</a>
+<a class="sidebar-item-active flex items-center gap-3 px-4 py-3 text-electric-blue font-bold rounded-r" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="text-sm">Clients</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+<span class="text-sm font-medium">Facturations</span>
+</a>
+</nav>
+<div class="p-4 border-t border-border-dark">
+<div class="flex items-center gap-3 p-2">
+<div class="size-8 rounded-full bg-slate-700 flex items-center justify-center text-[10px] font-bold">AD</div>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Admin Principal</p>
+<p class="text-[10px] text-slate-500 truncate">admin@superfactu.com</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col overflow-hidden">
+<header class="h-16 border-b border-border-dark flex items-center justify-between px-8 shrink-0 bg-background-dark/50 backdrop-blur-sm">
+<h2 class="text-lg font-bold">Répertoire Clientèle</h2>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 bg-surface-dark border border-border-dark rounded-full px-4 py-1.5 w-80">
+<span class="material-symbols-outlined text-slate-500 text-sm">search</span>
+<input class="bg-transparent border-none text-xs focus:ring-0 placeholder:text-slate-500 w-full p-0" placeholder="Rechercher un client (Nom, ID, Tel...)" type="text"/>
+</div>
+<div class="h-8 w-px bg-border-dark"></div>
+<div class="flex items-center gap-6">
+<div class="relative">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
+<span class="absolute -top-1 -right-1 size-2 bg-red-500 rounded-full border-2 border-background-dark"></span>
+</div>
+<div class="text-right">
+<p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">Aujourd'hui</p>
+<p class="text-xs font-bold text-white">24 Mai 2024</p>
+</div>
+</div>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-8">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 bg-electric-blue/10 text-electric-blue border border-electric-blue/20 rounded-lg text-xs font-bold hover:bg-electric-blue/20 transition-all">Tous les Clients</button>
+<button class="px-4 py-2 bg-surface-dark text-slate-400 border border-border-dark rounded-lg text-xs font-bold hover:text-white transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">stars</span> Top Acheteurs
+                </button>
+<button class="px-4 py-2 bg-surface-dark text-slate-400 border border-border-dark rounded-lg text-xs font-bold hover:text-white transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">timer_off</span> Clients Inactifs
+                </button>
+</div>
+<button class="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all">
+<span class="material-symbols-outlined text-sm">person_add</span> Nouveau Client
+            </button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+<div class="client-card bg-surface-dark border border-border-dark p-6 rounded-2xl flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<div class="size-12 rounded-full bg-gradient-to-tr from-electric-blue to-neon-blue flex items-center justify-center text-white font-bold text-lg">
+                        JD
+                    </div>
+<span class="px-2 py-1 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">FIDÉLITÉ GOLD</span>
+</div>
+<div>
+<h3 class="text-base font-bold text-white mb-1">Jean Dupont</h3>
+<p class="text-xs text-slate-500 mb-4">#CL-8824 • Client depuis 2022</p>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Points</p>
+<p class="text-lg font-extrabold text-neon-blue">2,450</p>
+</div>
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Dernier Achat</p>
+<p class="text-xs font-bold text-white">Hier, 14:30</p>
+</div>
+</div>
+<div class="border-t border-border-dark pt-4 flex items-center justify-between">
+<div>
+<p class="text-[10px] text-slate-500 font-bold">Total Dépensé</p>
+<p class="text-sm font-bold">1,890.40€</p>
+</div>
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="client-card bg-surface-dark border border-border-dark p-6 rounded-2xl flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<div class="size-12 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-lg">
+                        ML
+                    </div>
+<span class="px-2 py-1 rounded text-[10px] bg-electric-blue/10 text-electric-blue font-bold border border-electric-blue/20">SILVER</span>
+</div>
+<div>
+<h3 class="text-base font-bold text-white mb-1">Marie Lefebvre</h3>
+<p class="text-xs text-slate-500 mb-4">#CL-8831 • Client depuis 2023</p>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Points</p>
+<p class="text-lg font-extrabold text-neon-blue">840</p>
+</div>
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Dernier Achat</p>
+<p class="text-xs font-bold text-white">12 Mai 2024</p>
+</div>
+</div>
+<div class="border-t border-border-dark pt-4 flex items-center justify-between">
+<div>
+<p class="text-[10px] text-slate-500 font-bold">Total Dépensé</p>
+<p class="text-sm font-bold">425.10€</p>
+</div>
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="client-card bg-surface-dark border border-border-dark p-6 rounded-2xl flex flex-col opacity-80">
+<div class="flex justify-between items-start mb-4">
+<div class="size-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 font-bold text-lg">
+                        RB
+                    </div>
+<span class="px-2 py-1 rounded text-[10px] bg-red-500/10 text-red-400 font-bold border border-red-500/20 uppercase">Inactif</span>
+</div>
+<div>
+<h3 class="text-base font-bold text-white mb-1">Robert Bernard</h3>
+<p class="text-xs text-slate-500 mb-4">#CL-7540 • Client depuis 2021</p>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Points</p>
+<p class="text-lg font-extrabold text-slate-400">120</p>
+</div>
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Dernier Achat</p>
+<p class="text-xs font-bold text-slate-500">6 mois+</p>
+</div>
+</div>
+<div class="border-t border-border-dark pt-4 flex items-center justify-between">
+<div>
+<p class="text-[10px] text-slate-500 font-bold">Total Dépensé</p>
+<p class="text-sm font-bold">12,50€</p>
+</div>
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="client-card bg-surface-dark border border-border-dark p-6 rounded-2xl flex flex-col neon-glow">
+<div class="flex justify-between items-start mb-4">
+<div class="size-12 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold text-lg">
+                        SM
+                    </div>
+<span class="px-2 py-1 rounded text-[10px] bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20 uppercase">Top Acheteur</span>
+</div>
+<div>
+<h3 class="text-base font-bold text-white mb-1">Sophie Martin</h3>
+<p class="text-xs text-slate-500 mb-4">#CL-9012 • Client depuis 2024</p>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Points</p>
+<p class="text-lg font-extrabold text-neon-blue">5,100</p>
+</div>
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Dernier Achat</p>
+<p class="text-xs font-bold text-white">Il y a 2h</p>
+</div>
+</div>
+<div class="border-t border-border-dark pt-4 flex items-center justify-between">
+<div>
+<p class="text-[10px] text-slate-500 font-bold">Total Dépensé</p>
+<p class="text-sm font-bold">4,120.00€</p>
+</div>
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="client-card bg-surface-dark border border-border-dark p-6 rounded-2xl flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<div class="size-12 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-lg">
+                        TC
+                    </div>
+<span class="px-2 py-1 rounded text-[10px] bg-electric-blue/10 text-electric-blue font-bold border border-electric-blue/20">BASIC</span>
+</div>
+<div>
+<h3 class="text-base font-bold text-white mb-1">Thomas Costa</h3>
+<p class="text-xs text-slate-500 mb-4">#CL-8845 • Client depuis 2024</p>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Points</p>
+<p class="text-lg font-extrabold text-neon-blue">145</p>
+</div>
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Dernier Achat</p>
+<p class="text-xs font-bold text-white">20 Mai 2024</p>
+</div>
+</div>
+<div class="border-t border-border-dark pt-4 flex items-center justify-between">
+<div>
+<p class="text-[10px] text-slate-500 font-bold">Total Dépensé</p>
+<p class="text-sm font-bold">88.50€</p>
+</div>
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="client-card bg-surface-dark border border-border-dark p-6 rounded-2xl flex flex-col">
+<div class="flex justify-between items-start mb-4">
+<div class="size-12 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-lg">
+                        AD
+                    </div>
+<span class="px-2 py-1 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 uppercase">V.I.P</span>
+</div>
+<div>
+<h3 class="text-base font-bold text-white mb-1">Amandine Durand</h3>
+<p class="text-xs text-slate-500 mb-4">#CL-7701 • Client depuis 2021</p>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Points</p>
+<p class="text-lg font-extrabold text-neon-blue">1,200</p>
+</div>
+<div class="bg-background-dark/50 p-3 rounded-xl border border-border-dark">
+<p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Dernier Achat</p>
+<p class="text-xs font-bold text-white">Hier, 10:15</p>
+</div>
+</div>
+<div class="border-t border-border-dark pt-4 flex items-center justify-between">
+<div>
+<p class="text-[10px] text-slate-500 font-bold">Total Dépensé</p>
+<p class="text-sm font-bold">1,450.25€</p>
+</div>
+<button class="text-slate-400 hover:text-white transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="border-2 border-dashed border-border-dark p-6 rounded-2xl flex flex-col items-center justify-center text-slate-500 hover:border-slate-500 hover:text-slate-400 transition-all cursor-pointer group">
+<div class="size-12 rounded-full bg-surface-dark flex items-center justify-center mb-3 group-hover:bg-white/5">
+<span class="material-symbols-outlined">add</span>
+</div>
+<p class="text-sm font-bold">Ajouter un nouveau client</p>
+</div>
+</div>
+<div class="mt-8 pt-8 border-t border-border-dark flex items-center justify-between">
+<p class="text-xs text-slate-500 font-medium">Affichage de 6 sur 842 clients</p>
+<div class="flex items-center gap-2">
+<button class="size-8 flex items-center justify-center rounded border border-border-dark text-slate-500 hover:text-white hover:bg-white/5"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="size-8 flex items-center justify-center rounded bg-electric-blue text-white text-xs font-bold">1</button>
+<button class="size-8 flex items-center justify-center rounded border border-border-dark text-slate-500 hover:text-white hover:bg-white/5 text-xs font-bold">2</button>
+<button class="size-8 flex items-center justify-center rounded border border-border-dark text-slate-500 hover:text-white hover:bg-white/5 text-xs font-bold">3</button>
+<button class="size-8 flex items-center justify-center rounded border border-border-dark text-slate-500 hover:text-white hover:bg-white/5"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

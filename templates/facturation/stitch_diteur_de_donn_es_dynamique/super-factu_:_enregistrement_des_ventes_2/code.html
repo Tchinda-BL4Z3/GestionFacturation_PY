@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>S'inscrire | SUPER-FACTU</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "electric-blue": "#2563eb",
+                        "background-dark": "#0a0a0c",
+                        "surface-dark": "#161b22",
+                        "border-dark": "#2d333b",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .glass-card {
+            background: rgba(22, 27, 34, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at top center, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white antialiased font-display selection:bg-primary/30 min-h-screen flex flex-col">
+<header class="fixed top-0 w-full z-50 border-b border-white/5 bg-background-dark/80 backdrop-blur-md">
+<nav class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">storefront</span>
+</div>
+<h1 class="text-white text-xl font-extrabold tracking-tight">SUPER-FACTU</h1>
+</div>
+<div class="flex items-center gap-4">
+<a class="text-sm font-semibold text-slate-300 hover:text-white transition-colors" href="#">
+                Besoin d'aide ?
+            </a>
+</div>
+</nav>
+</header>
+<main class="flex-grow flex items-center justify-center pt-24 pb-12 hero-gradient px-6">
+<div class="w-full max-w-md">
+<div class="glass-card p-8 md:p-10 rounded-2xl shadow-2xl border border-white/10">
+<div class="flex flex-col items-center mb-8">
+<div class="size-14 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6">
+<span class="material-symbols-outlined text-4xl">how_to_reg</span>
+</div>
+<h2 class="text-2xl md:text-3xl font-extrabold text-white text-center mb-2">Créer un compte SUPER-FACTU</h2>
+<p class="text-slate-400 text-sm text-center">Rejoignez les commerces qui optimisent déjà leur gestion.</p>
+</div>
+<form class="space-y-5">
+<div>
+<label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2" for="company">Nom de l'entreprise</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">business</span>
+<input class="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-slate-500 focus:border-electric-blue focus:ring-1 focus:ring-electric-blue outline-none transition-all" id="company" name="company" placeholder="Ex: Supermarché Le Panier Bleu" type="text"/>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2" for="email">Adresse e-mail professionnelle</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">mail</span>
+<input class="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-slate-500 focus:border-electric-blue focus:ring-1 focus:ring-electric-blue outline-none transition-all" id="email" name="email" placeholder="contact@votre-entreprise.com" type="email"/>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2" for="password">Mot de passe</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">lock</span>
+<input class="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-slate-500 focus:border-electric-blue focus:ring-1 focus:ring-electric-blue outline-none transition-all" id="password" name="password" placeholder="••••••••••••" type="password"/>
+</div>
+</div>
+<div>
+<label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2" for="confirm-password">Confirmation du mot de passe</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">verified_user</span>
+<input class="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-slate-500 focus:border-electric-blue focus:ring-1 focus:ring-electric-blue outline-none transition-all" id="confirm-password" name="confirm-password" placeholder="••••••••••••" type="password"/>
+</div>
+</div>
+<div class="pt-2">
+<button class="w-full py-4 bg-electric-blue hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-electric-blue/30 transition-all transform hover:scale-[1.02] active:scale-100" type="submit">
+                        S'inscrire
+                    </button>
+</div>
+</form>
+<div class="mt-8 pt-6 border-t border-white/5 text-center">
+<p class="text-slate-400 text-sm">
+                    Vous avez déjà un compte ? 
+                    <a class="text-electric-blue hover:text-blue-400 font-bold transition-colors" href="#">Connectez-vous</a>
+</p>
+</div>
+</div>
+</div>
+</main>
+<footer class="border-t border-border-dark bg-background-dark py-12">
+<div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="flex items-center gap-3 opacity-50 grayscale">
+<div class="size-8 bg-slate-500 rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-sm">storefront</span>
+</div>
+<h1 class="text-white text-sm font-bold tracking-tight">SUPER-FACTU</h1>
+</div>
+<div class="flex gap-8 text-sm text-slate-500 font-medium">
+<a class="hover:text-white transition-colors" href="#">Confidentialité</a>
+<a class="hover:text-white transition-colors" href="#">Conditions</a>
+<a class="hover:text-white transition-colors" href="#">Mentions Légales</a>
+</div>
+<div class="text-slate-600 text-[10px] font-bold uppercase tracking-widest">
+            © 2024 SUPER-FACTU POS • TOUS DROITS RÉSERVÉS
+        </div>
+</div>
+</footer>
+
+</body></html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html class="dark" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SUPER-FACTU | Mes Produits Achetés</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1152d4",
+                        "electric-blue": "#2563eb",
+                        "neon-blue": "#00f2ff",
+                        "background-dark": "#0a0a0c",
+                        "surface-dark": "#161b22",
+                        "border-dark": "#2d333b",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        .sidebar-item-active {
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.1) 0%, transparent 100%);
+            border-left: 3px solid #2563eb;
+        }
+        .logout-glow:hover .material-symbols-outlined {
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d333b;
+            border-radius: 10px;
+        }
+        .thin-border-table tr {
+            border-bottom: 1px solid rgba(45, 51, 59, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-white antialiased font-display selection:bg-primary/30 flex h-screen overflow-hidden">
+<aside class="w-64 bg-surface-dark border-r border-border-dark flex flex-col h-full shrink-0">
+<div class="p-6 flex items-center gap-3">
+<div class="size-8 bg-electric-blue rounded flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-xl">storefront</span>
+</div>
+<h1 class="text-white text-lg font-extrabold tracking-tight">SUPER-FACTU</h1>
+</div>
+<nav class="flex-1 px-4 py-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm">Tableau de bord</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">shopping_bag</span>
+<span class="text-sm font-medium">Achats</span>
+</a>
+<a class="sidebar-item-active flex items-center gap-3 px-4 py-3 text-electric-blue font-bold rounded-r" href="#">
+<span class="material-symbols-outlined text-[20px]">inventory_2</span>
+<span class="text-sm font-medium">Stocks</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded" href="#">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+<span class="text-sm font-medium">Facturations</span>
+</a>
+</nav>
+<div class="mt-auto">
+<div class="px-4 pb-4">
+<div class="p-4 border-t border-border-dark">
+<div class="flex items-center gap-3 p-2">
+<div class="size-8 rounded-full bg-electric-blue/20 flex items-center justify-center text-[10px] font-bold text-electric-blue border border-electric-blue/30">AD</div>
+<div class="overflow-hidden">
+<p class="text-xs font-bold truncate">Alex Dupont</p>
+<p class="text-[10px] text-slate-500 truncate">a.dupont@superfactu.com</p>
+</div>
+</div>
+</div>
+<a class="logout-glow flex items-center gap-3 px-6 py-3 text-white hover:bg-red-500/10 transition-all rounded-xl group border border-transparent hover:border-red-500/20" href="#">
+<span class="material-symbols-outlined text-red-500 text-[22px]">logout</span>
+<span class="text-sm font-bold">Déconnexion</span>
+</a>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col overflow-hidden">
+<header class="h-16 border-b border-border-dark flex items-center justify-between px-8 shrink-0 bg-background-dark/50 backdrop-blur-sm">
+<div class="flex items-center gap-4">
+<h2 class="text-lg font-bold">Mes Produits Achetés</h2>
+<span class="px-2.5 py-0.5 rounded-full bg-electric-blue/10 border border-electric-blue/20 text-[10px] font-bold text-electric-blue uppercase tracking-wider">Stocks Client</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative group cursor-pointer">
+<div class="absolute -inset-1 bg-electric-blue/20 rounded-full blur opacity-0 group-hover:opacity-100 transition duration-300"></div>
+<div class="relative flex items-center gap-2 bg-surface-dark border border-border-dark px-3 py-1.5 rounded-lg">
+<span class="material-symbols-outlined text-sm text-electric-blue">account_balance_wallet</span>
+<span class="text-xs font-bold">759,50 €</span>
+</div>
+</div>
+<div class="h-8 w-px bg-border-dark"></div>
+<div class="text-right">
+<p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">Mise à jour</p>
+<p class="text-xs font-bold text-white">Il y a 5 min</p>
+</div>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-8">
+<div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<h3 class="text-2xl font-black text-white tracking-tight">Inventaire Personnel</h3>
+<p class="text-sm text-slate-400 mt-1">Consultez vos produits en possession et l'historique de vos consommations cumulées.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">search</span>
+<input class="bg-surface-dark border border-border-dark rounded-lg pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-electric-blue focus:border-electric-blue outline-none w-64 transition-all" placeholder="Rechercher un produit..." type="text"/>
+</div>
+<button class="bg-surface-dark border border-border-dark p-2 rounded-lg hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-slate-400 text-xl">filter_list</span>
+</button>
+</div>
+</div>
+<div class="bg-surface-dark rounded-2xl border border-border-dark overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left thin-border-table">
+<thead>
+<tr class="text-[11px] uppercase text-slate-500 tracking-widest bg-background-dark/30">
+<th class="px-8 py-5 font-bold">Produit</th>
+<th class="px-8 py-5 font-bold">Catégorie</th>
+<th class="px-8 py-5 font-bold">Dernier Achat</th>
+<th class="px-8 py-5 font-bold">Quantité Totale</th>
+<th class="px-8 py-5 font-bold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="text-sm">
+<tr class="hover:bg-white/[0.02] transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500">
+<span class="material-symbols-outlined">flatware</span>
+</div>
+<div>
+<p class="font-bold text-white">Riz Basmati Premium (5kg)</p>
+<p class="text-[10px] text-slate-500">REF: ART-4402</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="px-2 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-400 uppercase tracking-tight">Épicerie</span>
+</td>
+<td class="px-8 py-5 text-slate-400 font-medium">12 Mai 2024</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<span class="text-lg font-bold text-white">03</span>
+<span class="text-[10px] text-slate-500 uppercase font-bold">Unités</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-electric-blue hover:text-neon-blue font-bold text-xs uppercase tracking-tighter">Détails</button>
+</td>
+</tr>
+<tr class="hover:bg-white/[0.02] transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+<span class="material-symbols-outlined">water_drop</span>
+</div>
+<div>
+<p class="font-bold text-white">Pack Eau Minérale (6x1.5L)</p>
+<p class="text-[10px] text-slate-500">REF: ART-1109</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="px-2 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-400 uppercase tracking-tight">Boissons</span>
+</td>
+<td class="px-8 py-5 text-slate-400 font-medium">20 Mai 2024</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<span class="text-lg font-bold text-white">12</span>
+<span class="text-[10px] text-slate-500 uppercase font-bold">Packs</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-electric-blue hover:text-neon-blue font-bold text-xs uppercase tracking-tighter">Détails</button>
+</td>
+</tr>
+<tr class="hover:bg-white/[0.02] transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+<span class="material-symbols-outlined">eco</span>
+</div>
+<div>
+<p class="font-bold text-white">Pommes Gala Bio</p>
+<p class="text-[10px] text-slate-500">REF: ART-8831</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="px-2 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-400 uppercase tracking-tight">Fruits &amp; Légumes</span>
+</td>
+<td class="px-8 py-5 text-slate-400 font-medium">22 Mai 2024</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<span class="text-lg font-bold text-white">4.5</span>
+<span class="text-[10px] text-slate-500 uppercase font-bold">Kg</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-electric-blue hover:text-neon-blue font-bold text-xs uppercase tracking-tighter">Détails</button>
+</td>
+</tr>
+<tr class="hover:bg-white/[0.02] transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-500">
+<span class="material-symbols-outlined">soap</span>
+</div>
+<div>
+<p class="font-bold text-white">Lessive Liquide X-Tra</p>
+<p class="text-[10px] text-slate-500">REF: ART-5050</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="px-2 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-400 uppercase tracking-tight">Entretien</span>
+</td>
+<td class="px-8 py-5 text-slate-400 font-medium">10 Mai 2024</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<span class="text-lg font-bold text-white">01</span>
+<span class="text-[10px] text-slate-500 uppercase font-bold">Bouteille</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-electric-blue hover:text-neon-blue font-bold text-xs uppercase tracking-tighter">Détails</button>
+</td>
+</tr>
+<tr class="hover:bg-white/[0.02] transition-colors">
+<td class="px-8 py-5">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
+<span class="material-symbols-outlined">bakery_dining</span>
+</div>
+<div>
+<p class="font-bold text-white">Baguette Tradition</p>
+<p class="text-[10px] text-slate-500">REF: ART-0021</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<span class="px-2 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-400 uppercase tracking-tight">Boulangerie</span>
+</td>
+<td class="px-8 py-5 text-slate-400 font-medium">Aujourd'hui</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-2">
+<span class="text-lg font-bold text-white">42</span>
+<span class="text-[10px] text-slate-500 uppercase font-bold">Cumul Annuel</span>
+</div>
+</td>
+<td class="px-8 py-5 text-right">
+<button class="text-electric-blue hover:text-neon-blue font-bold text-xs uppercase tracking-tighter">Détails</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 border-t border-border-dark flex items-center justify-between">
+<p class="text-xs text-slate-500">Affichage de 1-5 sur 24 produits achetés</p>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 rounded bg-surface-dark border border-border-dark text-slate-400 hover:text-white hover:border-slate-500 transition-all">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="px-3 py-1.5 rounded bg-electric-blue text-white text-[10px] font-bold">1</button>
+<button class="px-3 py-1.5 rounded bg-surface-dark border border-border-dark text-slate-400 hover:text-white hover:border-slate-500 transition-all text-[10px] font-bold">2</button>
+<button class="px-3 py-1.5 rounded bg-surface-dark border border-border-dark text-slate-400 hover:text-white hover:border-slate-500 transition-all text-[10px] font-bold">3</button>
+<button class="px-3 py-1.5 rounded bg-surface-dark border border-border-dark text-slate-400 hover:text-white hover:border-slate-500 transition-all">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="p-5 bg-surface-dark/40 border border-border-dark rounded-xl">
+<div class="flex items-center gap-3 mb-3">
+<span class="material-symbols-outlined text-electric-blue">insights</span>
+<h4 class="text-xs font-bold uppercase tracking-widest text-slate-300">Produit Favori</h4>
+</div>
+<p class="text-xl font-extrabold">Eau Minérale</p>
+<p class="text-[10px] text-slate-500 mt-1">Acheté 15 fois ce mois-ci</p>
+</div>
+<div class="p-5 bg-surface-dark/40 border border-border-dark rounded-xl">
+<div class="flex items-center gap-3 mb-3">
+<span class="material-symbols-outlined text-amber-500">history</span>
+<h4 class="text-xs font-bold uppercase tracking-widest text-slate-300">Consommation</h4>
+</div>
+<p class="text-xl font-extrabold">+12.4%</p>
+<p class="text-[10px] text-slate-500 mt-1">Par rapport au mois dernier</p>
+</div>
+<div class="p-5 bg-surface-dark/40 border border-border-dark rounded-xl">
+<div class="flex items-center gap-3 mb-3">
+<span class="material-symbols-outlined text-emerald-500">savings</span>
+<h4 class="text-xs font-bold uppercase tracking-widest text-slate-300">Économies Fidélité</h4>
+</div>
+<p class="text-xl font-extrabold">24,80 €</p>
+<p class="text-[10px] text-slate-500 mt-1">Cumulées sur vos produits fréquents</p>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>
