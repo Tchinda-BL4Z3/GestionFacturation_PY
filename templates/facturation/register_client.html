@@ -45,6 +45,13 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .hero-gradient { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.08) 0%, transparent 70%); }
+        
+        /* Animation pour le modal */
+        @keyframes modalShow {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-modal { animation: modalShow 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="text-white antialiased font-display min-h-screen flex flex-col">
@@ -127,6 +134,30 @@
         </div>
     </div>
 </main>
+
+<!-- FENÊTRE DE CONFIRMATION (MODAL) -->
+{% if success %}
+<div id="confirmationModal" class="fixed inset-0 z-[100] flex items-center justify-center px-6">
+    <!-- Overlay sombre flouté -->
+    <div class="absolute inset-0 bg-background-dark/80 backdrop-blur-xl"></div>
+    
+    <!-- Contenu du Modal -->
+    <div class="relative glass-card w-full max-w-sm p-10 rounded-[2rem] border border-emerald-500/30 text-center animate-modal shadow-2xl shadow-emerald-500/10">
+        <div class="size-24 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 border border-emerald-500/20">
+            <span class="material-symbols-outlined text-5xl">check_circle</span>
+        </div>
+        
+        <h3 class="text-2xl font-black text-white mb-4">Bienvenue !</h3>
+        <p class="text-slate-400 text-sm leading-relaxed mb-10">
+            Votre compte a été créé avec succès dans notre base de données. Vous pouvez maintenant accéder à votre espace client.
+        </p>
+        
+        <a href="{% url 'login_client' %}" class="block w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-background-dark font-black rounded-2xl shadow-xl shadow-emerald-500/20 transition-all transform active:scale-95 uppercase tracking-widest text-xs">
+            Se Connecter
+        </a>
+    </div>
+</div>
+{% endif %}
 
 <footer class="border-t border-white/5 bg-black/20 py-8">
     <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">

@@ -5,55 +5,50 @@
 
 {% block extra_style %}
 <style type="text/tailwindcss">
-    .material-symbols-outlined {
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
     body {
         font-family: 'Manrope', sans-serif;
-        background-image: 
-            linear-gradient(to bottom, rgba(10, 10, 12, 0.9), rgba(10, 10, 12, 0.98)),
-            url("{% static 'img/fond_supermarche.jpeg' %}");
-        background-attachment: fixed;
-        background-size: cover;
+        background-image: linear-gradient(to bottom, rgba(10, 10, 12, 0.9), rgba(10, 10, 12, 0.98)),
+                          url("{% static 'img/fond_supermarche.jpeg' %}");
+        background-attachment: fixed; background-size: cover;
     }
-    .neon-glow-red {
-        box-shadow: 0 0 10px rgba(255, 0, 60, 0.2);
-        border: 1px solid rgba(255, 0, 60, 0.4);
-    }
-    .table-row-hover:hover {
-        background-color: rgba(255, 255, 255, 0.02);
-    }
+    .neon-glow-red { box-shadow: 0 0 10px rgba(255, 0, 60, 0.2); border: 1px solid rgba(255, 0, 60, 0.4); }
+    .table-row-hover:hover { background-color: rgba(255, 255, 255, 0.02); }
     details summary::-webkit-details-marker { display: none; }
     details[open] .expand-icon { transform: rotate(180deg); }
+    
+    .input-premium {
+        @apply w-full bg-background-dark/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-electric-blue focus:ring-1 focus:ring-electric-blue/30 outline-none transition-all placeholder:text-slate-600;
+    }
+    .label-premium {
+        @apply text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <main class="flex-1 flex flex-col overflow-hidden">
-    <!-- HEADER AVEC RECHERCHE -->
+    <!-- HEADER -->
     <header class="h-16 border-b border-border-dark flex items-center justify-between px-8 shrink-0 bg-background-dark/50 backdrop-blur-sm">
         <div class="flex items-center gap-4 flex-1">
-            <h2 class="text-lg font-bold whitespace-nowrap">Inventaire par Catégories</h2>
-            <form method="GET" class="flex items-center gap-3 bg-white/5 border-2 border-primary/30 rounded-lg px-4 py-2 ml-4 w-full max-w-xl transition-all focus-within:border-primary focus-within:bg-white/10">
+            <h2 class="text-lg font-bold whitespace-nowrap text-white">Inventaire par Catégories</h2>
+            <form method="GET" action="{% url 'stocks_admin' %}" class="flex items-center gap-3 bg-white/5 border-2 border-primary/30 rounded-lg px-4 py-2 ml-4 w-full max-w-xl focus-within:border-primary">
                 <span class="material-symbols-outlined text-primary text-xl">search</span>
-                <input name="q" value="{{ query }}" class="bg-transparent border-none text-sm focus:ring-0 p-0 w-full placeholder:text-slate-500 text-white" placeholder="Rechercher un produit ou code-barres..." type="text"/>
-                <kbd class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 border border-border-dark bg-surface-dark text-[10px] text-slate-400 rounded">⌘K</kbd>
+                <input name="q" value="{{ query }}" class="bg-transparent border-none text-sm focus:ring-0 p-0 w-full text-white" placeholder="Rechercher par nom ou code-barres..." type="text"/>
+                {% if query %}
+                    <a href="{% url 'stocks_admin' %}" class="text-slate-500 hover:text-white"><span class="material-symbols-outlined text-sm">close</span></a>
+                {% endif %}
             </form>
         </div>
         <div class="flex items-center gap-4 ml-4">
-            <button class="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-border-dark text-xs font-bold px-4 py-2.5 rounded transition-all">
-                <span class="material-symbols-outlined text-sm">ios_share</span> Exporter
-            </button>
-            <a href="/admin/facturation/article/add/" class="flex items-center gap-2 bg-electric-blue hover:bg-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded shadow-lg shadow-electric-blue/20 transition-all">
+            <button onclick="toggleAddModal()" class="flex items-center gap-2 bg-electric-blue hover:bg-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded shadow-lg shadow-electric-blue/20 transition-all">
                 <span class="material-symbols-outlined text-sm">add</span> Nouveau Produit
-            </a>
+            </button>
         </div>
     </header>
 
-    <!-- ZONE DE CONTENU DYNAMIQUE -->
     <div class="flex-1 overflow-y-auto p-8 space-y-8">
-        
-        <!-- BANDEAU DES STATS REELLES -->
+        <!-- BANDEAU STATS -->
         <div class="flex items-center gap-12 bg-surface-dark/80 backdrop-blur-md p-6 rounded-2xl border border-border-dark shadow-xl">
             <div class="flex flex-col">
                 <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Total Produits</span>
@@ -67,91 +62,296 @@
             <div class="h-10 w-px bg-border-dark"></div>
             <div class="flex flex-col">
                 <span class="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Valeur Stock (HT)</span>
-                <span class="text-2xl font-bold text-neon-blue">{{ valeur_stock|floatformat:0 }} <span class="text-sm font-normal">FCFA</span></span>
+                <span class="text-2xl font-bold text-neon-blue">{{ valeur_stock|floatformat:0 }} <span class="text-sm font-normal text-slate-400">FCFA</span></span>
             </div>
         </div>
 
-        <!-- SECTIONS PAR CATEGORIES -->
+        <!-- SECTIONS CATEGORIES -->
         <section class="space-y-6">
             {% for cat in categories %}
-            <div class="space-y-3">
-                <details class="group bg-surface-dark/60 backdrop-blur-md border border-border-dark rounded-xl overflow-hidden" {% if forloop.first %}open{% endif %}>
-                    <summary class="flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors list-none">
-                        <div class="flex items-center gap-4">
-                            <span class="material-symbols-outlined text-slate-400 group-open:text-electric-blue">inventory_2</span>
-                            <span class="font-bold text-lg tracking-tight text-white">{{ cat.nom }}</span>
-                            <span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest">
-                                {{ cat.article_set.count }} PRODUITS
-                            </span>
-                        </div>
-                        <span class="material-symbols-outlined expand-icon transition-transform text-slate-500">expand_more</span>
-                    </summary>
-                    
-                    <div class="border-t border-border-dark">
-                        <table class="w-full text-left text-sm">
-                            <thead class="text-[10px] uppercase text-slate-500 tracking-widest bg-background-dark/50">
-                                <tr>
-                                    <th class="px-6 py-4 font-bold">Produit</th>
-                                    <th class="px-6 py-4 font-bold">Code-barres</th>
-                                    <th class="px-6 py-4 text-center font-bold">Stock</th>
-                                    <th class="px-6 py-4 text-right font-bold">Prix HT</th>
-                                    <th class="px-6 py-4 text-center font-bold w-20">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-border-dark">
-                                {% for art in cat.article_set.all %}
-                                <tr class="table-row-hover transition-colors">
-                                    <td class="px-6 py-4">
-                                        <div class="flex flex-col">
-                                            <span class="font-bold text-white">{{ art.nom }}</span>
-                                            <span class="text-[10px] text-slate-500 uppercase tracking-tighter">{{ art.unite_mesure }}</span>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 font-mono text-xs text-slate-400">{{ art.code_barres }}</td>
-                                    <td class="px-6 py-4 text-center">
-                                        {% if art.stock_actuel <= art.stock_minimum %}
-                                            <span class="neon-glow-red px-2 py-1 rounded-full text-[10px] text-neon-red font-extrabold uppercase bg-neon-red/10">
-                                                {{ art.stock_actuel }} (CRITIQUE)
-                                            </span>
-                                        {% else %}
-                                            <span class="font-bold text-emerald-400">{{ art.stock_actuel }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="px-6 py-4 text-right font-mono font-bold text-white">{{ art.prix_ht|floatformat:0 }} FCFA</td>
-                                    <td class="px-6 py-4 text-center">
-                                        <a href="/admin/facturation/article/{{ art.id }}/change/" class="text-slate-500 hover:text-white transition-all transform hover:scale-110">
-                                            <span class="material-symbols-outlined text-lg">edit</span>
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="5" class="px-6 py-8 text-center text-slate-500 italic">Aucun produit trouvé dans cette catégorie.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+            <details class="group bg-surface-dark/60 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden" {% if query or forloop.first %}open{% endif %}>
+                <summary class="flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 list-none">
+                    <div class="flex items-center gap-4">
+                        <span class="material-symbols-outlined text-slate-400 group-open:text-electric-blue">inventory_2</span>
+                        <span class="font-bold text-lg text-white tracking-tight">{{ cat.nom }}</span>
+                        <span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest">{{ cat.article_set.count }} PRODUITS</span>
                     </div>
-                </details>
-            </div>
+                    <span class="material-symbols-outlined expand-icon transition-transform text-slate-500">expand_more</span>
+                </summary>
+                <div class="border-t border-border-dark">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-[10px] uppercase text-slate-500 tracking-widest bg-background-dark/50">
+                            <tr>
+                                <th class="px-6 py-4">Produit & Unité</th>
+                                <th class="px-6 py-4">Code-barres</th>
+                                <th class="px-6 py-4 text-center">Stock</th>
+                                <th class="px-6 py-4 text-right">Prix HT</th>
+                                <th class="px-6 py-4 text-center w-24">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-dark">
+                            {% for art in cat.article_set.all %}
+                            <tr class="table-row-hover transition-colors">
+                                <td class="px-6 py-4 flex flex-col">
+                                    <span class="font-bold text-white">{{ art.nom }}</span>
+                                    <span class="text-[9px] text-electric-blue font-black uppercase tracking-widest mt-0.5">Vendu à la {{ art.unite_mesure }}</span>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs text-slate-400">{{ art.code_barres }}</td>
+                                <td class="px-6 py-4 text-center">
+                                    {% if art.stock_actuel <= art.stock_minimum %}
+                                        <span class="neon-glow-red px-2 py-1 rounded-full text-[10px] text-neon-red font-extrabold uppercase bg-neon-red/10 border border-neon-red/20">
+                                            {{ art.stock_actuel }} (CRITIQUE)
+                                        </span>
+                                    {% else %}
+                                        <span class="font-bold text-emerald-400">{{ art.stock_actuel }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-right font-mono font-bold text-white">{{ art.prix_ht|floatformat:0 }} FCFA</td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="flex items-center justify-center gap-3">
+                                        <!-- BOUTON ÉDITION -->
+                                        <button onclick="openEditModal('{{ art.id }}', '{{ art.nom|escapejs }}', '{{ art.categorie.id }}', '{{ art.unite_mesure }}', '{{ art.code_barres }}', '{{ art.prix_ht|stringformat:'.2f' }}', '{{ art.stock_actuel }}', '{{ art.stock_minimum }}')" class="text-slate-500 hover:text-amber-500 transition-all">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </button>
+                                        <!-- BOUTON SUPPRESSION (NOUVEAU) -->
+                                        <button onclick="openDeleteModal('{{ art.id }}', '{{ art.nom|escapejs }}')" class="text-slate-500 hover:text-red-500 transition-all">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-slate-500 italic">Aucun produit ne correspond à votre recherche.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
             {% empty %}
             <div class="p-20 text-center bg-surface-dark/40 rounded-3xl border border-dashed border-border-dark">
-                <span class="material-symbols-outlined text-6xl text-slate-700 mb-4">inventory</span>
-                <p class="text-slate-500 font-bold uppercase tracking-widest">La base de données est vide ou aucun résultat trouvé.</p>
+                <span class="material-symbols-outlined text-6xl text-slate-700 mb-4">search_off</span>
+                <p class="text-slate-500 font-bold uppercase tracking-widest italic">Aucun résultat trouvé pour "{{ query }}"</p>
+                <a href="{% url 'stocks_admin' %}" class="mt-4 inline-block text-electric-blue font-bold hover:underline">Réinitialiser la recherche</a>
             </div>
             {% endfor %}
         </section>
     </div>
 
-    <!-- FOOTER -->
-    <footer class="h-12 border-t border-border-dark px-8 flex items-center justify-between bg-surface-dark/50 shrink-0">
-        <p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Système d'Inventaire Centralisé v2.4</p>
-        <div class="flex items-center gap-4">
-            <span class="flex items-center gap-2 text-[10px] text-emerald-500 font-bold uppercase">
-                <span class="size-1.5 rounded-full bg-emerald-500"></span>
-                Base de données synchronisée (PostgreSQL)
-            </span>
+    <!-- MODAL DE CONFIRMATION DE SUPPRESSION (NOUVEAU) -->
+    <div id="deleteModal" class="fixed inset-0 z-[110] hidden flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" onclick="toggleDeleteModal()"></div>
+        <div class="relative w-full max-w-md bg-surface-dark border border-red-500/30 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div class="p-8 text-center">
+                <div class="size-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20">
+                    <span class="material-symbols-outlined text-4xl">delete_forever</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Supprimer le produit ?</h3>
+                <p class="text-slate-400 text-sm mb-8">
+                    Voulez-vous vraiment retirer <span id="delete_item_name" class="text-white font-bold"></span> de l'inventaire ? Cette action est irréversible.
+                </p>
+                
+                <form method="POST" action="{% url 'stocks_admin' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="delete_article_id" name="delete_article_id">
+                    <div class="flex gap-4">
+                        <button type="button" onclick="toggleDeleteModal()" class="flex-1 py-4 bg-white/5 text-slate-400 font-bold rounded-xl hover:bg-white/10 transition-all">Annuler</button>
+                        <button type="submit" class="flex-1 py-4 bg-red-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all">Supprimer</button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </footer>
+    </div>
+
+    <!-- MODAL D'ÉDITION PRODUIT -->
+    <div id="editModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-background-dark/80 backdrop-blur-md" onclick="toggleEditModal()"></div>
+        <div class="relative w-full max-w-2xl bg-surface-dark border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div class="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                <h3 class="text-xl font-bold flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-amber-500">edit_note</span>
+                    Modifier le Produit
+                </h3>
+                <button onclick="toggleEditModal()" class="text-slate-500 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            
+            <form method="POST" action="{% url 'stocks_admin' %}" class="p-8 space-y-6">
+                {% csrf_token %}
+                <input type="hidden" id="edit_article_id" name="article_id">
+
+                <div class="grid grid-cols-2 gap-x-6 gap-y-5">
+                    <div class="col-span-2">
+                        <label class="label-premium">Nom du Produit</label>
+                        <input id="edit_nom" name="nom" class="input-premium" required type="text">
+                    </div>
+                    <div>
+                        <label class="label-premium">Catégorie</label>
+                        <select id="edit_categorie" name="categorie" class="input-premium appearance-none" required>
+                            {% for c in all_categories %}
+                            <option value="{{ c.id }}">{{ c.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-premium">Unité de mesure</label>
+                        <select id="edit_unite_mesure" name="unite_mesure" class="input-premium appearance-none" required>
+                            <option value="pièce">Pièce (U)</option>
+                            <option value="kg">Kilogramme (kg)</option>
+                            <option value="L">Litre (L)</option>
+                            <option value="paquet">Paquet</option>
+                            <option value="carton">Carton</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-premium">Code-barres (EAN13)</label>
+                        <input id="edit_code_barres" name="code_barres" class="input-premium" required type="text">
+                    </div>
+                    <div>
+                        <label class="label-premium">Prix Unitaire HT (FCFA)</label>
+                        <input id="edit_prix_ht" name="prix_ht" class="input-premium" required type="number" step="0.01">
+                    </div>
+                    <div>
+                        <label class="label-premium">Stock Actuel</label>
+                        <input id="edit_stock_actuel" name="stock_actuel" class="input-premium" type="number" required>
+                    </div>
+                    <div>
+                        <label class="label-premium">Seuil d'alerte</label>
+                        <input id="edit_stock_minimum" name="stock_minimum" class="input-premium" type="number" required>
+                    </div>
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="toggleEditModal()" class="flex-1 py-4 bg-white/5 text-slate-400 font-bold rounded-xl hover:bg-white/10 transition-all">Annuler</button>
+                    <button type="submit" class="flex-1 py-4 bg-amber-500 text-black font-black uppercase tracking-widest rounded-xl shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition-all">Mettre à jour</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL D'AJOUT PRODUIT -->
+    <div id="addModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-background-dark/80 backdrop-blur-md" onclick="toggleAddModal()"></div>
+        <div class="relative w-full max-w-2xl bg-surface-dark border border-white/10 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div class="p-6 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                <h3 class="text-xl font-bold flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-electric-blue">add_box</span>
+                    Nouveau Produit
+                </h3>
+                <button onclick="toggleAddModal()" class="text-slate-500 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <form method="POST" class="p-8 space-y-6">
+                {% csrf_token %}
+                <div class="grid grid-cols-2 gap-x-6 gap-y-5">
+                    <div class="col-span-2">
+                        <label class="label-premium">Nom du Produit</label>
+                        <input name="nom" class="input-premium" placeholder="ex: Riz Parfumé 5kg" required type="text">
+                    </div>
+                    <div>
+                        <label class="label-premium">Catégorie</label>
+                        <select name="categorie" class="input-premium appearance-none" required>
+                            {% for c in all_categories %}
+                            <option value="{{ c.id }}">{{ c.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-premium">Unité de mesure</label>
+                        <select name="unite_mesure" class="input-premium appearance-none" required>
+                            <option value="pièce">Pièce (U)</option>
+                            <option value="kg">Kilogramme (kg)</option>
+                            <option value="L">Litre (L)</option>
+                            <option value="paquet">Paquet</option>
+                            <option value="carton">Carton</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label-premium">Code-barres (EAN13)</label>
+                        <input name="code_barres" class="input-premium" placeholder="ex: 6921234567890" required type="text">
+                    </div>
+                    <div>
+                        <label class="label-premium">Prix Unitaire HT (FCFA)</label>
+                        <input name="prix_ht" class="input-premium" placeholder="0" required type="number" step="0.01">
+                    </div>
+                    <div>
+                        <label class="label-premium">Stock Initial</label>
+                        <input name="stock_actuel" class="input-premium" value="0" type="number" required>
+                    </div>
+                    <div>
+                        <label class="label-premium">Seuil d'alerte</label>
+                        <input name="stock_minimum" class="input-premium" value="5" type="number" required>
+                    </div>
+                    <input type="hidden" name="taux_tva" value="19.25">
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="toggleAddModal()" class="flex-1 py-4 bg-white/5 text-slate-400 font-bold rounded-xl hover:bg-white/10 transition-all">Annuler</button>
+                    <button type="submit" class="flex-1 py-4 bg-electric-blue text-white font-bold rounded-xl shadow-lg shadow-electric-blue/20 hover:bg-blue-600 transition-all">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST CONFIRMATION -->
+    {% if messages %}
+    <div id="toast" class="fixed bottom-10 right-10 z-[200] animate-in slide-in-from-right duration-500">
+        {% for message in messages %}
+        <div class="bg-surface-dark border border-emerald-500/50 p-6 rounded-2xl shadow-2xl flex items-center gap-4">
+            <div class="size-12 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">check_circle</span>
+            </div>
+            <div>
+                <p class="text-white font-bold">{{ message }}</p>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest mt-1">Inventaire mis à jour</p>
+            </div>
+            <button onclick="document.getElementById('toast').remove()" class="ml-4 text-slate-500 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
 </main>
+
+<script>
+    function toggleAddModal() {
+        document.getElementById('addModal').classList.toggle('hidden');
+    }
+
+    function toggleEditModal() {
+        document.getElementById('editModal').classList.toggle('hidden');
+    }
+
+    // NOUVELLE FONCTION POUR LE MODAL DE SUPPRESSION
+    function toggleDeleteModal() {
+        document.getElementById('deleteModal').classList.toggle('hidden');
+    }
+
+    function openEditModal(id, nom, catId, unite, code, prix, stock, mini) {
+        document.getElementById('edit_article_id').value = id;
+        document.getElementById('edit_nom').value = nom;
+        document.getElementById('edit_categorie').value = catId;
+        document.getElementById('edit_unite_mesure').value = unite;
+        document.getElementById('edit_code_barres').value = code;
+        document.getElementById('edit_prix_ht').value = parseFloat(prix);
+        document.getElementById('edit_stock_actuel').value = stock;
+        document.getElementById('edit_stock_minimum').value = mini;
+        toggleEditModal();
+    }
+
+    // FONCTION POUR OUVRIR LE MODAL DE SUPPRESSION ET REMPLIR LES INFOS
+    function openDeleteModal(id, nom) {
+        document.getElementById('delete_article_id').value = id;
+        document.getElementById('delete_item_name').innerText = nom;
+        toggleDeleteModal();
+    }
+
+    setTimeout(() => {
+        const toast = document.getElementById('toast');
+        if (toast) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100px)';
+            toast.style.transition = 'all 0.5s ease';
+            setTimeout(() => { toast.remove(); }, 500);
+        }
+    }, 5000);
+</script>
 {% endblock %}

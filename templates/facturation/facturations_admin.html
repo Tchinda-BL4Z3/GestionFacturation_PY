@@ -1,0 +1,186 @@
+{% extends 'layouts/adminLayout.html' %}
+{% load static %}
+
+{% block title %}SUPER-FACTU | Historique de Facturation{% endblock %}
+
+{% block extra_style %}
+<style>
+    body {
+        background-image: 
+            linear-gradient(to bottom, rgba(10, 10, 12, 0.9), rgba(10, 10, 12, 0.98)),
+            url("{% static 'img/fond_supermarche.jpeg' %}");
+        background-attachment: fixed;
+        background-size: cover;
+    }
+    .neon-glow {
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+        border: 1px solid rgba(0, 242, 255, 0.2);
+    }
+    .table-row-hover:hover {
+        background-color: rgba(255, 255, 255, 0.03);
+    }
+</style>
+{% endblock %}
+
+{% block header_title %}Historique de Facturation{% endblock %}
+
+{% block content %}
+<div class="flex-1 overflow-y-auto p-8">
+    
+    <!-- BARRE DE FILTRES DYNAMIQUE -->
+    <form method="GET" class="bg-surface-dark/60 backdrop-blur-md border border-white/5 rounded-2xl p-5 mb-8 flex flex-wrap items-center gap-6 shadow-2xl">
+        <div class="flex-1 min-w-[280px] relative">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-lg">search</span>
+            <input name="q" value="{{ request.GET.q|default:'' }}" class="w-full bg-background-dark/50 border-white/10 rounded-xl text-sm pl-12 pr-4 py-2.5 focus:ring-electric-blue focus:border-electric-blue text-white outline-none" placeholder="Rechercher N° Facture..." type="text"/>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Période :</span>
+            <input name="date_debut" value="{{ request.GET.date_debut }}" class="bg-background-dark/50 border-white/10 rounded-lg text-xs text-white px-3 py-2 outline-none" type="date"/>
+            <span class="text-slate-500 text-xs">au</span>
+            <input name="date_fin" value="{{ request.GET.date_fin }}" class="bg-background-dark/50 border-white/10 rounded-lg text-xs text-white px-3 py-2 outline-none" type="date"/>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Caissier :</span>
+            <select name="caissier" class="bg-background-dark/50 border-white/10 rounded-lg text-xs text-white px-3 py-2 outline-none">
+                <option value="Tous">Tous les caissiers</option>
+                {% for c in caissiers %}
+                <option value="{{ c.id }}" {% if request.GET.caissier == c.id|stringformat:"s" %}selected{% endif %}>{{ c.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="flex gap-2">
+            <button type="submit" class="bg-electric-blue hover:bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest px-6 py-2.5 rounded-xl transition-all shadow-lg shadow-electric-blue/20 flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">filter_list</span> Filtrer
+            </button>
+            <a href="{% url 'facturations_admin' %}" class="bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 p-2.5 rounded-xl transition-all">
+                <span class="material-symbols-outlined text-sm">restart_alt</span>
+            </a>
+        </div>
+    </form>
+
+    <!-- CARDS STATS FILTRÉES -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-surface-dark/80 backdrop-blur-md border border-white/5 p-6 rounded-2xl flex items-center justify-between">
+            <div>
+                <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Volume Factures</p>
+                <p class="text-3xl font-black text-white">{{ total_factures }}</p>
+            </div>
+            <div class="size-12 bg-electric-blue/10 rounded-xl flex items-center justify-center text-electric-blue">
+                <span class="material-symbols-outlined text-3xl">description</span>
+            </div>
+        </div>
+        <div class="bg-surface-dark/80 backdrop-blur-md border border-white/5 p-6 rounded-2xl flex items-center justify-between">
+            <div>
+                <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">C.A. Filtré (TTC)</p>
+                <p class="text-3xl font-black text-white">{{ ca_periode|floatformat:0 }} <span class="text-xs font-normal">FCFA</span></p>
+            </div>
+            <div class="size-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-500">
+                <span class="material-symbols-outlined text-3xl">payments</span>
+            </div>
+        </div>
+        <div class="bg-surface-dark/80 backdrop-blur-md border border-white/5 p-6 rounded-2xl flex items-center justify-between">
+            <div>
+                <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Factures Annulées</p>
+                <p class="text-3xl font-black text-red-500">{{ total_annulees }}</p>
+            </div>
+            <div class="size-12 bg-red-500/10 rounded-xl flex items-center justify-center text-red-500">
+                <span class="material-symbols-outlined text-3xl">cancel</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLEAU DES FACTURES -->
+    <div class="bg-surface-dark/80 backdrop-blur-md rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
+        <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+            <h3 class="font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-electric-blue">list_alt</span>
+                Dernières Factures Émises
+            </h3>
+            <button class="bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-xl flex items-center gap-2 transition-all">
+                <span class="material-symbols-outlined text-sm">download</span> Exporter Rapport
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead>
+                    <tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-white/5 bg-black/40">
+                        <th class="px-6 py-4 font-bold">N° Facture</th>
+                        <th class="px-6 py-4 font-bold">Date & Heure</th>
+                        <th class="px-6 py-4 font-bold">Client</th>
+                        <th class="px-6 py-4 font-bold">Caissier</th>
+                        <th class="px-6 py-4 font-bold text-right">Montant TTC</th>
+                        <th class="px-6 py-4 font-bold text-center">Statut</th>
+                        <th class="px-6 py-4 font-bold text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for f in factures %}
+                    <tr class="table-row-hover transition-colors {% if f.statut == 'annulée' %}bg-red-500/5{% endif %}">
+                        <td class="px-6 py-4 font-black {% if f.statut == 'annulée' %}text-red-400{% else %}text-electric-blue{% endif %} font-mono">
+                            #{{ f.numero_facture }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-xs text-white">{{ f.date_facture|date:"d M Y" }}</p>
+                            <p class="text-[10px] text-slate-500">{{ f.date_facture|date:"H:i:s" }}</p>
+                        </td>
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-xs">{{ f.client.prenom|default:"Passage" }} {{ f.client.nom|default:"" }}</p>
+                            {% if f.client.carte_fidelite %}
+                                <p class="text-[9px] text-electric-blue font-bold uppercase">FID: #{{ f.client.carte_fidelite }}</p>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-xs font-bold text-slate-400">{{ f.utilisateur.username }}</td>
+                        <td class="px-6 py-4 text-right font-mono font-black {% if f.statut == 'annulée' %}line-through text-slate-600{% else %}text-white{% endif %}">
+                            {{ f.montant_ttc|floatformat:0 }} FCFA
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% if f.statut == 'valide' %}
+                                <span class="px-3 py-1 rounded-full text-[9px] bg-emerald-500/10 text-emerald-400 font-black border border-emerald-500/20 uppercase">Payé</span>
+                            {% elif f.statut == 'annulée' %}
+                                <span class="px-3 py-1 rounded-full text-[9px] bg-red-500/10 text-red-500 font-black border border-red-500/20 uppercase">Annulé</span>
+                            {% else %}
+                                <span class="px-3 py-1 rounded-full text-[9px] bg-amber-500/10 text-amber-500 font-black border border-amber-500/20 uppercase">Avoir</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center justify-end gap-2">
+                                <button class="size-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white transition-all" title="Voir détails">
+                                    <span class="material-symbols-outlined text-lg">visibility</span>
+                                </button>
+                                <button class="size-8 flex items-center justify-center rounded-lg bg-white/5 text-slate-400 hover:text-white transition-all" title="Imprimer">
+                                    <span class="material-symbols-outlined text-lg">print</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-20 text-center text-slate-500 italic">
+                            Aucune facture trouvée pour ces critères.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- PAGINATION -->
+        <div class="p-6 border-t border-white/5 flex items-center justify-between bg-black/20">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Page 1 sur 1 • Total {{ total_factures }} factures</p>
+            <div class="flex items-center gap-2">
+                <button class="size-10 flex items-center justify-center rounded-xl border border-white/5 text-slate-500 opacity-50 cursor-not-allowed">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button class="size-10 flex items-center justify-center rounded-xl bg-electric-blue text-white text-xs font-black">1</button>
+                <button class="size-10 flex items-center justify-center rounded-xl border border-white/5 text-slate-500 opacity-50 cursor-not-allowed">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

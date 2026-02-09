@@ -15,4 +15,6 @@ urlpatterns = [
     path('dashboard/ventes/', views.ventes_admin, name='ventes_admin'),
     path('dashboard/stocks/', views.stocks_admin, name='stocks_admin'),
     path('dashboard/utilisateurs/', views.utilisateurs_admin, name='utilisateurs_admin'),
+    path('dashboard/clients/', views.clients_admin, name='clients_admin'),
+    path('dashboard/facturations/', views.facturations_admin, name='facturations_admin'),
 ]

@@ -108,12 +108,15 @@
                 <span class="text-sm">Utilisateurs</span>
             </a>
 
-            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded group" href="#">
+            <!-- LIEN CLIENTS MIS À JOUR -->
+            <a class="flex items-center gap-3 px-4 py-3 transition-all rounded group {% if active_menu == 'clients' %}sidebar-item-active{% else %}text-slate-400 hover:text-white hover:bg-white/5{% endif %}" 
+               href="{% url 'clients_admin' %}">
                 <span class="material-symbols-outlined text-[22px]">group</span>
-                <span class="text-sm font-medium">Clients</span>
+                <span class="text-sm">Clients</span>
             </a>
 
-            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded group" href="#">
+            <a class="flex items-center gap-3 px-4 py-3 transition-all rounded group {% if active_menu == 'facturations' %}sidebar-item-active{% else %}text-slate-400 hover:text-white hover:bg-white/5{% endif %}"
+                href="{% url 'facturations_admin' %}">
                 <span class="material-symbols-outlined text-[22px]">receipt_long</span>
                 <span class="text-sm font-medium">Facturations</span>
             </a>

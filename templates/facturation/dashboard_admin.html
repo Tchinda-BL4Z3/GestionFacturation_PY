@@ -61,47 +61,76 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- TABLE TOP PRODUITS -->
-        <div class="lg:col-span-2 bg-surface-dark/60 rounded-3xl border border-white/5 overflow-hidden flex flex-col backdrop-blur-md shadow-2xl">
-            <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
-                <h3 class="font-bold flex items-center gap-2">
-                    <span class="material-symbols-outlined text-electric-blue">analytics</span>
-                    Top 5 Produits Vendus
-                </h3>
+        <div class="lg:col-span-2 space-y-6">
+            <!-- TABLE TOP PRODUITS -->
+            <div class="bg-surface-dark/60 rounded-3xl border border-white/5 overflow-hidden flex flex-col backdrop-blur-md shadow-2xl">
+                <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
+                    <h3 class="font-bold flex items-center gap-2">
+                        <span class="material-symbols-outlined text-electric-blue">analytics</span>
+                        Top 5 Produits Vendus
+                    </h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-white/5 bg-black/40">
+                                <th class="px-6 py-4 font-bold">Produit</th>
+                                <th class="px-6 py-4 font-bold text-center">Quantité</th>
+                                <th class="px-6 py-4 font-bold text-right">Revenue (FCFA)</th>
+                                <th class="px-6 py-4 font-bold text-center">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            {% for p in top_produits %}
+                            <tr class="hover:bg-white/5 transition-colors">
+                                <td class="px-6 py-4">
+                                    <span class="font-bold text-white">{{ p.article__nom }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-center font-medium">{{ p.qty_vendue|floatformat:0 }}</td>
+                                <td class="px-6 py-4 text-right font-mono font-bold text-neon-blue">{{ p.revenue|floatformat:0 }}</td>
+                                <td class="px-6 py-4 text-center">
+                                    {% if p.article__stock_actuel <= p.article__stock_minimum %}
+                                        <span class="px-2 py-1 rounded text-[9px] bg-red-500/10 text-red-400 font-black uppercase tracking-tighter border border-red-500/20">Critique</span>
+                                    {% else %}
+                                        <span class="px-2 py-1 rounded text-[9px] bg-emerald-500/10 text-emerald-400 font-black uppercase tracking-tighter border border-emerald-500/20">Optimal</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="px-6 py-12 text-center text-slate-500 italic">Aucune donnée de vente disponible</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead>
-                        <tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-white/5 bg-black/40">
-                            <th class="px-6 py-4 font-bold">Produit</th>
-                            <th class="px-6 py-4 font-bold text-center">Quantité</th>
-                            <th class="px-6 py-4 font-bold text-right">Revenue (FCFA)</th>
-                            <th class="px-6 py-4 font-bold text-center">Statut</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-white/5">
-                        {% for p in top_produits %}
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="px-6 py-4">
-                                <span class="font-bold text-white">{{ p.article__nom }}</span>
-                            </td>
-                            <td class="px-6 py-4 text-center font-medium">{{ p.qty_vendue|floatformat:0 }}</td>
-                            <td class="px-6 py-4 text-right font-mono font-bold text-neon-blue">{{ p.revenue|floatformat:0 }}</td>
-                            <td class="px-6 py-4 text-center">
-                                {% if p.article__stock_actuel <= p.article__stock_minimum %}
-                                    <span class="px-2 py-1 rounded text-[9px] bg-red-500/10 text-red-400 font-black uppercase tracking-tighter border border-red-500/20">Critique</span>
-                                {% else %}
-                                    <span class="px-2 py-1 rounded text-[9px] bg-emerald-500/10 text-emerald-400 font-black uppercase tracking-tighter border border-emerald-500/20">Optimal</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="px-6 py-12 text-center text-slate-500 italic">Aucune donnée de vente disponible</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+
+            <!-- NOUVELLE SECTION : DISTRIBUTION PAR CATÉGORIES -->
+            <div class="bg-surface-dark/60 rounded-3xl border border-white/5 p-6 backdrop-blur-md shadow-2xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="font-bold flex items-center gap-2">
+                        <span class="material-symbols-outlined text-neon-blue">category</span>
+                        Inventaire par Catégories
+                    </h3>
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Total produits par section</span>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {% for cat in stats_categories %}
+                    <div class="p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-neon-blue/30 transition-all group">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tight mb-1 group-hover:text-neon-blue transition-colors">{{ cat.nom }}</p>
+                        <div class="flex items-end gap-2">
+                            <span class="text-2xl font-black text-white">{{ cat.nb_produits }}</span>
+                            <span class="text-[10px] text-slate-500 mb-1.5 font-bold">Produits</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-span-4 py-4 text-center text-slate-500 italic text-xs">
+                        Aucune catégorie configurée
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
@@ -145,8 +174,6 @@
 </div>
 
 <script>
-    // Le modal est déjà géré par le adminLayout.html, 
-    // mais nous assurons ici la liaison si nécessaire.
     function toggleLogoutModal() {
         const modal = document.getElementById('logoutModal');
         if (modal) {
@@ -155,7 +182,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Cibler tous les liens de déconnexion possibles dans la page
         const logoutBtns = document.querySelectorAll('.logout-trigger');
         logoutBtns.forEach(btn => {
             btn.addEventListener('click', function(e) {

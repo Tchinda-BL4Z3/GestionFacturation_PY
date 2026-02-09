@@ -46,6 +46,14 @@
         }
         .hero-gradient { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.08) 0%, transparent 70%); }
         .input-field { @apply w-full bg-background-dark/50 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-electric-blue focus:ring-1 focus:ring-electric-blue transition-all outline-none; }
+
+        /* Animation pour le modal */
+        @keyframes modalBounce {
+            0% { transform: scale(0.9); opacity: 0; }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-success { animation: modalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
     </style>
 </head>
 <body class="text-white antialiased font-display min-h-screen flex flex-col">
@@ -90,7 +98,7 @@
                     <label class="text-sm font-medium text-slate-300 ml-1" for="identifier">E-mail</label>
                     <div class="relative">
                         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">alternate_email</span>
-                        <input class="input-field pl-12" id="identifier" name="email" placeholder="nom@exemple.com" type="email" required/>
+                        <input class="input-field pl-12" id="identifier" name="email" placeholder=" nom@exemple.com" type="email" required/>
                     </div>
                 </div>
                 <div class="space-y-2">
@@ -100,7 +108,7 @@
                     </div>
                     <div class="relative">
                         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">lock</span>
-                        <input class="input-field pl-12" id="password" name="password" placeholder="••••••••" type="password" required/>
+                        <input class="input-field pl-12" id="password" name="password" placeholder=" ••••••••" type="password" required/>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 px-1">
@@ -127,6 +135,31 @@
         </div>
     </div>
 </main>
+
+<!-- FENÊTRE DE CONFIRMATION D'ACCÈS (MODAL) -->
+{% if success %}
+<div id="accessModal" class="fixed inset-0 z-[100] flex items-center justify-center px-6">
+    <!-- Overlay avec flou intense -->
+    <div class="absolute inset-0 bg-background-dark/90 backdrop-blur-2xl"></div>
+    
+    <!-- Contenu du Modal -->
+    <div class="relative glass-card w-full max-w-sm p-10 rounded-[2.5rem] border border-electric-blue/30 text-center animate-success shadow-2xl shadow-electric-blue/10">
+        <div class="size-24 bg-electric-blue rounded-3xl flex items-center justify-center mx-auto mb-8 rotate-12 shadow-xl shadow-electric-blue/20">
+            <span class="material-symbols-outlined text-5xl text-white -rotate-12">verified</span>
+        </div>
+        
+        <h3 class="text-2xl font-black text-white mb-3">Accès Autorisé</h3>
+        <p class="text-slate-400 text-sm leading-relaxed mb-10">
+            Ravi de vous revoir ! Votre connexion a été établie avec succès. Vous allez être redirigé vers votre espace personnel.
+        </p>
+        
+        <!-- Redirection vers le tableau de bord client (à créer) ou accueil -->
+        <a href="{% url 'home' %}" class="block w-full py-4 bg-white text-background-dark font-black rounded-2xl shadow-xl hover:bg-slate-200 transition-all transform active:scale-95 uppercase tracking-widest text-xs">
+            Accéder à mon tableau de bord
+        </a>
+    </div>
+</div>
+{% endif %}
 
 <footer class="border-t border-border-dark bg-surface-dark/30 py-8">
     <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
