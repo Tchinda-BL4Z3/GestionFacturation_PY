@@ -1,0 +1,247 @@
+{% extends 'layouts/adminLayout.html' %}
+{% load static %}
+
+{% block title %}SUPER-FACTU | Analyse de Performance{% endblock %}
+
+{% block extra_style %}
+<!-- Intégration de Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    body {
+        background-image: linear-gradient(to bottom, rgba(10, 10, 12, 0.8), rgba(10, 10, 12, 0.95)),
+                          url("{% static 'img/fond_supermarche.jpeg' %}");
+        background-attachment: fixed; 
+        background-size: cover;
+    }
+
+    .chart-container {
+        background: rgba(22, 27, 34, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease;
+    }
+
+    .chart-container:hover {
+        border-color: rgba(0, 242, 255, 0.2);
+    }
+
+    /* Personnalisation de la scrollbar */
+    .flex-1::-webkit-scrollbar {
+        width: 6px;
+    }
+    .flex-1::-webkit-scrollbar-thumb {
+        background: rgba(0, 242, 255, 0.2);
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block header_title %}Analyse Statistique & Graphiques{% endblock %}
+
+{% block content %}
+<div class="flex-1 overflow-y-auto p-8">
+    
+    <!-- KPI CARDS RAPIDES (DYNAMISÉES) --> 
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <!-- Chiffre d'affaires -->
+        <div class="chart-container p-6 rounded-3xl border-l-4 border-l-electric-blue">
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Chiffre d'Affaires Global</p>
+            <h2 class="text-3xl font-black text-white">
+                {{ total_ca|default:0|floatformat:0 }} <span class="text-xs text-slate-500">FCFA</span>
+            </h2>
+        </div>
+
+        <!-- Panier Moyen -->
+        <div class="chart-container p-6 rounded-3xl border-l-4 border-l-emerald-500">
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Panier Moyen</p>
+            <h2 class="text-3xl font-black text-white">
+                {{ panier_moyen|default:0|floatformat:0 }} <span class="text-xs text-slate-500">FCFA</span>
+            </h2>
+        </div>
+
+        <!-- Taux de retour -->
+        <div class="chart-container p-6 rounded-3xl border-l-4 border-l-amber-500">
+            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-2">Taux d'Annulation / Avoir</p>
+            <h2 class="text-3xl font-black text-white">
+                {{ taux_retour|default:0|floatformat:1 }} <span class="text-xs text-slate-500">%</span>
+            </h2>
+        </div>
+    </div>
+
+    <!-- GRAPHIQUES PRINCIPAUX -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+        
+        <!-- Évolution des Ventes -->
+        <div class="chart-container p-8 rounded-3xl">
+            <h3 class="text-xs font-black text-white uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span class="material-symbols-outlined text-electric-blue">trending_up</span> 
+                Évolution du CA (7 Jours)
+            </h3>
+            <div class="relative h-[250px]">
+                <canvas id="salesEvolutionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Ventes par Catégorie -->
+        <div class="chart-container p-8 rounded-3xl">
+            <h3 class="text-xs font-black text-white uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span class="material-symbols-outlined text-neon-blue">pie_chart</span> 
+                Répartition par Catégorie
+            </h3>
+            <div class="max-w-[280px] mx-auto">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        
+        <!-- Top Produits -->
+        <div class="xl:col-span-2 chart-container p-8 rounded-3xl">
+            <h3 class="text-xs font-black text-white uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-500">leaderboard</span> 
+                Top 5 Produits les plus vendus
+            </h3>
+            <div class="relative h-[200px]">
+                <canvas id="topProductsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Modes de Paiement -->
+        <div class="chart-container p-8 rounded-3xl">
+            <h3 class="text-xs font-black text-white uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span class="material-symbols-outlined text-emerald-500">payments</span> 
+                Modes de Paiement
+            </h3>
+            <div class="space-y-6">
+                {% for mode in modes_paiement %}
+                <div>
+                    <div class="flex justify-between text-[10px] font-black uppercase mb-2">
+                        <span class="text-slate-400">{{ mode.mode_paiement }}</span>
+                        <span class="text-white">{{ mode.count }} trans.</span>
+                    </div>
+                    <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                        <!-- Calcul dynamique de la largeur (count / total_factures * 100) -->
+                        <div class="bg-emerald-500 h-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" 
+                             style="width: {% widthratio mode.count total_factures 100 %}%"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-[10px] text-slate-500 italic text-center py-4">Aucune donnée</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- SCRIPTS DES GRAPHIQUES (DYNAMISÉS) -->
+<script>
+    // Configuration globale
+    Chart.defaults.color = 'rgba(255, 255, 255, 0.5)';
+    Chart.defaults.font.family = 'Inter, sans-serif';
+
+    // 1. Graphique Évolution (Line)
+    const ctxSales = document.getElementById('salesEvolutionChart').getContext('2d');
+    new Chart(ctxSales, {
+        type: 'line',
+        data: {
+            labels: [
+                {% for v in ventes_evolution %}
+                    "{{ v.jour|date:'d M' }}"{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'CA',
+                data: [
+                    {% for v in ventes_evolution %}
+                        {{ v.total|stringformat:'f' }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                ],
+                borderColor: '#00f2ff',
+                backgroundColor: 'rgba(0, 242, 255, 0.1)',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 3,
+                pointBackgroundColor: '#00f2ff',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { 
+                    grid: { color: 'rgba(255,255,255,0.05)' }, 
+                    ticks: { callback: (v) => v.toLocaleString() + ' F' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 2. Graphique Catégories (Doughnut)
+    const ctxCat = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctxCat, {
+        type: 'doughnut',
+        data: {
+            labels: [
+                {% for c in stats_categories %}
+                    "{{ c.article__categorie__nom }}"{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for c in stats_categories %}
+                        {{ c.total|stringformat:'f' }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 20, boxWidth: 10, font: { size: 10 } } }
+            },
+            cutout: '75%'
+        }
+    });
+
+    // 3. Top Produits (Bar)
+    const ctxTop = document.getElementById('topProductsChart').getContext('2d');
+    new Chart(ctxTop, {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for p in top_produits %}
+                    "{{ p.article__nom }}"{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                data: [
+                    {% for p in top_produits %}
+                        {{ p.total_vendu|stringformat:'f' }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(37, 99, 235, 0.6)',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+</script> 
+{% endblock %}

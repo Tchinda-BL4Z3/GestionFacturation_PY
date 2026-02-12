@@ -12,6 +12,9 @@ from .models import Article, Categorie, Facture, LigneFacture, Client
 from .models import Facture, User
 from django.db.models import Count 
 from django.http import HttpResponse, JsonResponse 
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models.functions import TruncDate 
 import csv
 import datetime 
 from django.http import HttpResponse
@@ -510,7 +513,7 @@ def facturations_admin(request):
         'total_factures': factures.count(),
         'ca_periode': stats['total_ca'] or 0,
         'total_annulees': stats['nb_annulees'] or 0,
-        'active_menu': 'factures'
+        'active_menu': 'facturations'
     }
     return render(request, 'facturation/facturations_admin.html', context)
 
@@ -647,6 +650,61 @@ def imprimer_facture(request, facture_id):
     }
     # On utilise un template spécial pour l'impression (sans sidebar ni menus)
     return render(request, 'facturation/facture_print.html', context)
+
+
+def analyse_admin(request):
+    if request.session.get('role') != 'admin':
+        return redirect('login_admin')
+
+    # 1. Chiffre d'Affaires Total (Invoices Validated)
+    total_ca = Facture.objects.filter(statut='valide').aggregate(Sum('montant_ttc'))['montant_ttc__sum'] or 0
+
+    # 1.b Panier Moyen (Moyenne des factures valides)
+    panier_moyen = Facture.objects.filter(statut='valide').aggregate(Avg('montant_ttc'))['montant_ttc__avg'] or 0
+
+    # 1.c Taux de retour (Annulations + Avoirs / Total)
+    total_factures = Facture.objects.count()
+    factures_retour = Facture.objects.filter(statut__in=['annulée', 'avoir']).count()
+    taux_retour = (factures_retour / total_factures * 100) if total_factures > 0 else 0
+    # ---------------------------------
+
+    # 2. Ventes des 7 derniers jours (pour le graphique linéaire)
+    sept_jours_derniers = timezone.now() - timedelta(days=7)
+    ventes_evolution = Facture.objects.filter(statut='valide', date_facture__gte=sept_jours_derniers) \
+        .annotate(jour=TruncDate('date_facture')) \
+        .values('jour') \
+        .annotate(total=Sum('montant_ttc')) \
+        .order_by('jour')
+
+    # 3. Répartition par Catégorie (pour le graphique camembert)
+    stats_categories = LigneFacture.objects.filter(facture__statut='valide') \
+        .values('article__categorie__nom') \
+        .annotate(total=Sum('total_ttc')) \
+        .order_by('-total')
+
+    # 4. Top 5 des produits les plus vendus
+    top_produits = LigneFacture.objects.filter(facture__statut='valide') \
+        .values('article__nom') \
+        .annotate(quantite=Sum('quantite')) \
+        .order_by('-quantite')[:5]
+
+    # 5. Modes de paiement
+    modes_paiement = Facture.objects.filter(statut='valide') \
+        .values('mode_paiement') \
+        .annotate(count=Count('id'))
+
+    context = {
+        'total_ca': total_ca,
+        'panier_moyen': panier_moyen,        
+        'taux_retour': taux_retour,          
+        'total_factures': total_factures,     
+        'ventes_evolution': ventes_evolution,
+        'stats_categories': stats_categories,
+        'top_produits': top_produits,
+        'modes_paiement': modes_paiement,
+        'active_menu': 'analyse',
+    }
+    return render(request, 'facturation/analyse_admin.html', context)
 
 
 # =========================[ fin du dashboard admin ]============================
