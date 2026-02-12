@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { size: A4; margin: 1.5cm; }
+        body { font-family: sans-serif; color: #333; line-height: 1.4; }
+        .header { text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 20px; }
+        .title { font-size: 22px; font-weight: bold; color: #1e293b; margin: 0; }
+        .info { font-size: 10px; color: #64748b; margin-bottom: 30px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th { background-color: #f1f5f9; color: #475569; font-size: 10px; text-transform: uppercase; padding: 10px; border: 1px solid #e2e8f0; text-align: left; }
+        td { padding: 10px; font-size: 11px; border: 1px solid #e2e8f0; }
+        
+        .total-section { text-align: right; padding-top: 10px; border-top: 2px solid #2563eb; }
+        .total-label { font-size: 12px; font-weight: bold; color: #64748b; }
+        .total-amount { font-size: 18px; font-weight: 900; color: #2563eb; }
+        
+        .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <p class="title">RAPPORT DES VENTES</p>
+        <p style="font-size: 12px; margin: 5px 0 0 0;">SUPER-FACTU | Gestion de Facturation</p>
+    </div>
+
+    <div class="info">
+        Rapport généré le : <strong>{{ date|date:"d/m/Y" }}</strong> <br>
+        Filtre Caissier : <strong>{{ caissier }}</strong>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>N° Facture</th>
+                <th>Date & Heure</th>
+                <th>Client</th>
+                <th>Caissier</th>
+                <th style="text-align: right;">Montant TTC</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in factures %}
+            <tr>
+                <td style="font-weight: bold; color: #2563eb;">#{{ f.numero_facture }}</td>
+                <td>{{ f.date_facture|date:"d/m/Y H:i" }}</td>
+                <td>{{ f.client.prenom|default:"Passage" }} {{ f.client.nom|default:"" }}</td>
+                <td>{{ f.utilisateur.username }}</td>
+                <td style="text-align: right; font-weight: bold;">{{ f.montant_ttc|floatformat:0 }} FCFA</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <span class="total-label">CHIFFRE D'AFFAIRES TOTAL :</span> <br>
+        <span class="total-amount">{{ total_ttc|floatformat:0 }} FCFA</span>
+    </div>
+
+    <div class="footer">
+        © 2026 SUPER-FACTU - Système de Gestion Supermarché - Page 1 / 1
+    </div>
+</body>
+</html>

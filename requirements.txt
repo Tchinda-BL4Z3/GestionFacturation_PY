@@ -1,0 +1,18 @@
+# Framework Principal
+Django>=5.0
+
+# Base de données PostgreSQL
+psycopg2-binary
+
+# API et Filtrage (si utilisé pour les tableaux de bord)
+djangorestframework
+django-filter
+
+# Export EXCEL
+openpyxl
+
+# Export PDF
+weasyprint
+
+# Utilitaires
+python-dotenv

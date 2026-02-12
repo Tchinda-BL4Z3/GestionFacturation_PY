@@ -11,6 +11,13 @@ from django.db.models import Avg, Sum, Max, Count, F, Q, Prefetch
 from .models import Article, Categorie, Facture, LigneFacture, Client
 from .models import Facture, User
 from django.db.models import Count 
+from django.http import HttpResponse, JsonResponse 
+import csv
+import datetime 
+from django.http import HttpResponse
+from openpyxl import Workbook
+from weasyprint import HTML
+from django.template.loader import render_to_string
 
 
 def home(request):
@@ -24,12 +31,23 @@ def login_admin(request):
     if request.method == "POST":
         email = request.POST.get('email')
         password = request.POST.get('password')
-        if email == "admin@gmail.com" and password == "admin1234":
+
+        # 1. On cherche l'utilisateur par son email
+        try:
+            user_obj = User.objects.get(email=email)
+            # 2. On vérifie si le mot de passe est correct via Django
+            user = authenticate(request, username=user_obj.username, password=password)
             
-            request.session['role'] = 'admin'
-            return redirect('dashboard_admin') 
-        else:
-            error = "Identifiants administrateur incorrects."
+            if user is not None and user.is_superuser:
+                # 3. On connecte OFFICIELLEMENT l'utilisateur pour tout le site
+                login(request, user) 
+                request.session['role'] = 'admin'
+                return redirect('dashboard_admin')
+            else:
+                error = "Identifiants incorrects ou accès refusé."
+        except User.DoesNotExist:
+            error = "Cet administrateur n'existe pas."
+
     return render(request, 'facturation/login_admin.html', {'error': error})
 
 # =========================[ Vue pour le dashboard admin ]==========================
@@ -273,47 +291,181 @@ def stocks_admin(request):
 
 
 def utilisateurs_admin(request):
+    """
+    Gestion du personnel et des utilisateurs via l'interface Admin Premium.
+    Gère l'ajout, la modification, le changement de statut et la suppression sécurisée.
+    """
+    # 1. SÉCURITÉ : Vérification du rôle dans la session
     if request.session.get('role') != 'admin':
         return redirect('login_admin')
 
-    # 1. Récupérer tous les utilisateurs
-    utilisateurs = User.objects.all().order_by('-date_joined')
+    # 2. SÉCURITÉ ANTI-CRASH : Si l'utilisateur n'est pas authentifié par Django
+    # on empêche l'exécution des fonctions de mot de passe pour éviter le NotImplementedError
+    if not request.user.is_authenticated:
+        messages.error(request, "Votre session Django a expiré. Veuillez vous reconnecter sur la page admin.")
+        return redirect('login_admin')
 
-    # 2. Récupérer les 5 dernières actions du journal de bord (Admin logs)
-    logs = LogEntry.objects.select_related('user', 'content_type').all()[:5]
+    # --- LOGIQUE DE TRAITEMENT DES ACTIONS (POST) ---
+    if request.method == "POST":
+        action = request.POST.get('action_type')
+        user_id = request.POST.get('user_id')
+
+        # 1. AJOUT D'UN UTILISATEUR
+        if action == "add_user":
+            username = request.POST.get('username')
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+            role = request.POST.get('role')
+
+            if User.objects.filter(username=username).exists():
+                messages.error(request, "Erreur : Ce nom d'utilisateur existe déjà.")
+            else:
+                new_user = User.objects.create_user(username=username, email=email, password=password)
+                if role == 'admin':
+                    new_user.is_superuser = True
+                    new_user.is_staff = True
+                elif role == 'caissier':
+                    new_user.is_staff = True
+                new_user.save()
+                messages.success(request, f"L'utilisateur {username} ({role}) a été créé avec succès.")
+
+        # 2. SUSPENSION / ACTIVATION
+        elif action == "toggle_status":
+            u = get_object_or_404(User, id=user_id)
+            if u == request.user:
+                messages.warning(request, "Action impossible : Vous ne pouvez pas suspendre votre propre compte.")
+            else:
+                u.is_active = not u.is_active
+                u.save()
+                status_text = "activé" if u.is_active else "suspendu"
+                messages.success(request, f"L'utilisateur {u.username} a été {status_text} avec succès.")
+
+        # 3. MISE À JOUR DES INFORMATIONS
+        elif action == "update_user":
+            u = get_object_or_404(User, id=user_id)
+            new_username = request.POST.get('username')
+            new_email = request.POST.get('email')
+
+            if User.objects.filter(username=new_username).exclude(id=user_id).exists():
+                messages.error(request, f"Le nom d'utilisateur '{new_username}' est déjà utilisé.")
+            else:
+                u.username = new_username
+                u.email = new_email
+                u.save()
+                messages.success(request, f"Les informations de {u.username} ont été mises à jour.")
+
+        # 4. SUPPRESSION DÉFINITIVE SÉCURISÉE (Correction de l'erreur NotImplementedError)
+        elif action == "delete_user_secure":
+            admin_password = request.POST.get('admin_password')
+            u = get_object_or_404(User, id=user_id)
+            
+            # Vérification sécurisée du mot de passe
+            # Comme on a vérifié is_authenticated en haut, request.user est forcément un objet User réel ici
+            if not request.user.check_password(admin_password):
+                messages.error(request, "Échec de suppression : Mot de passe administrateur incorrect.")
+            elif u == request.user:
+                messages.error(request, "Action refusée : Vous ne pouvez pas supprimer votre propre compte.")
+            elif u.is_superuser and User.objects.filter(is_superuser=True).count() <= 1:
+                messages.error(request, "Sécurité : Impossible de supprimer le dernier administrateur.")
+            else:
+                nom_supprime = u.username
+                u.delete()
+                messages.success(request, f"L'utilisateur {nom_supprime} a été supprimé définitivement.")
+
+        return redirect('utilisateurs_admin')
+
+    # --- LOGIQUE D'AFFICHAGE (GET) ---
+    query = request.GET.get('q', '')
+    if query:
+        utilisateurs = User.objects.filter(
+            Q(username__icontains=query) | Q(email__icontains=query)
+        ).order_by('-date_joined')
+    else:
+        utilisateurs = User.objects.all().order_by('date_joined')
+    
+    logs = LogEntry.objects.select_related('user', 'content_type').all().order_by('-action_time')[:50]
 
     context = {
         'utilisateurs': utilisateurs,
         'logs': logs,
+        'query': query,
         'active_menu': 'utilisateurs',
-        'now': now(),
     }
     return render(request, 'facturation/utilisateurs_admin.html', context)
+
+
+def toggle_user_status(request, user_id):
+    """Fonction pour suspendre ou activer un utilisateur rapidement"""
+    if request.session.get('role') != 'admin':
+        return redirect('login_admin')
+    
+    user_to_change = get_object_or_404(User, id=user_id)
+    # Empêcher de se désactiver soi-même ou un autre superadmin par erreur
+    if not user_to_change.is_superuser:
+        user_to_change.is_active = not user_to_change.is_active
+        user_to_change.save()
+        
+    return redirect('utilisateurs_admin')
 
 
 def clients_admin(request):
     if request.session.get('role') != 'admin':
         return redirect('login_admin')
 
-    # Recherche
+    # Traitement des actions POST (Désactivation / Suppression)
+    if request.method == "POST":
+        action = request.POST.get('action')
+        client_id = request.POST.get('client_id')
+        client = get_object_or_404(Client, id=client_id)
+
+        if action == "toggle_status":
+            # On suppose que tu as un champ 'actif' dans ton modèle Client (comme dans le CDC)
+            client.actif = not client.actif
+            client.save()
+            status_msg = "activé" if client.actif else "désactivé"
+            messages.success(request, f"Le compte de {client.prenom} a été {status_msg}.")
+
+        elif action == "delete_client":
+            admin_password = request.POST.get('admin_password')
+            # Vérification du mot de passe de l'admin actuellement connecté
+            user = authenticate(username=request.user.username, password=admin_password)
+            
+            if user is not None:
+                client.delete()
+                messages.success(request, f"Le compte client a été définitivement supprimé.")
+            else:
+                messages.error(request, "Mot de passe administrateur incorrect. Suppression annulée.")
+
+        return redirect(request.path)
+
+    # Logique de recherche et filtrage
     query = request.GET.get('q', '')
-    
-    # Récupération des clients avec calculs dynamiques
-    clients = Client.objects.annotate(
+    filter_type = request.GET.get('filter', 'all')
+
+    clients_list = Client.objects.annotate(
         total_depense=Sum('facture__montant_ttc'),
         dernier_achat=Max('facture__date_facture'),
-        nb_factures=Count('facture')
-    ).order_by('-total_depense')
+        nb_achats=Count('facture')
+    )
 
     if query:
-        clients = clients.filter(nom__icontains=query) | clients.filter(prenom__icontains=query)
+        clients_list = clients_list.filter(
+            Q(nom__icontains=query) | 
+            Q(prenom__icontains=query) | 
+            Q(telephone__icontains=query)
+        )
 
-    # Statistiques globales pour les boutons de filtre
-    total_clients_count = Client.objects.count()
+    if filter_type == 'top':
+        clients_list = clients_list.filter(total_depense__gt=100000).order_by('-total_depense')
+    elif filter_type == 'inactive':
+        clients_list = clients_list.filter(total_depense__isnull=True)
+    else:
+        clients_list = clients_list.order_by('-id')
 
     context = {
-        'clients': clients,
-        'total_clients_count': total_clients_count,
+        'clients': clients_list,
+        'total_clients_count': Client.objects.count(),
+        'filter_type': filter_type,
         'active_menu': 'clients'
     }
     return render(request, 'facturation/clients_admin.html', context)
@@ -323,42 +475,178 @@ def facturations_admin(request):
     if request.session.get('role') != 'admin':
         return redirect('login_admin')
 
-    # 1. Récupération des filtres depuis l'URL
+    # 1. Récupération des filtres
     query = request.GET.get('q', '')
     date_debut = request.GET.get('date_debut')
     date_fin = request.GET.get('date_fin')
     caissier_id = request.GET.get('caissier')
 
-    # 2. Construction de la requête de base
-    factures_qs = Facture.objects.select_related('client', 'utilisateur').all()
+    # Base de la requête
+    factures = Facture.objects.all().order_by('-date_facture')
 
-    # Application des filtres
+    # 2. Application des filtres
     if query:
-        factures_qs = factures_qs.filter(numero_facture__icontains=query)
+        factures = factures.filter(numero_facture__icontains=query)
     
-    if date_debut and date_fin:
-        factures_qs = factures_qs.filter(date_facture__date__range=[date_debut, date_fin])
+    if date_debut:
+        factures = factures.filter(date_facture__date__gte=parse_date(date_debut))
+    
+    if date_fin:
+        factures = factures.filter(date_facture__date__lte=parse_date(date_fin))
     
     if caissier_id and caissier_id != 'Tous':
-        factures_qs = factures_qs.filter(utilisateur_id=caissier_id)
+        factures = factures.filter(utilisateur_id=caissier_id)
 
-    # 3. Calcul des statistiques (basé sur le QuerySet filtré)
-    total_factures = factures_qs.count()
-    ca_periode = factures_qs.filter(statut='valide').aggregate(total=Sum('montant_ttc'))['total'] or 0
-    total_annulees = factures_qs.filter(statut='annulée').count()
-
-    # Liste des caissiers pour le menu déroulant
-    caissiers = User.objects.all()
+    # 3. Calcul des statistiques sur les données FILTRÉES
+    stats = factures.aggregate(
+        total_ca=Sum('montant_ttc', filter=Q(statut='valide')),
+        nb_total=Sum(1), # Count
+        nb_annulees=Sum(1, filter=Q(statut='annulée'))
+    )
 
     context = {
-        'factures': factures_qs.order_by('-date_facture'),
-        'total_factures': total_factures,
-        'ca_periode': ca_periode,
-        'total_annulees': total_annulees,
-        'caissiers': caissiers,
-        'active_menu': 'facturations'
+        'factures': factures,
+        'caissiers': User.objects.all(),
+        'total_factures': factures.count(),
+        'ca_periode': stats['total_ca'] or 0,
+        'total_annulees': stats['nb_annulees'] or 0,
+        'active_menu': 'factures'
     }
     return render(request, 'facturation/facturations_admin.html', context)
+
+# VUE POUR L'EXPORT CSV
+def export_factures_csv(request):
+    # On récupère les mêmes filtres que la vue principale pour n'exporter que ce qu'on voit
+    factures = Facture.objects.all()
+    # (Appliquer les mêmes filtres que ci-dessus ici...)
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="rapport_factures.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['N° Facture', 'Date', 'Client', 'Caissier', 'Montant TTC', 'Statut'])
+    
+    for f in factures:
+        writer.writerow([f.numero_facture, f.date_facture, f.client, f.utilisateur.username, f.montant_ttc, f.statut])
+        
+    return response
+
+def export_factures(request, format):
+    # 1. Récupérer les données de base
+    factures = Facture.objects.all().order_by('-date_facture')
+
+    # 2. Appliquer les MÊMES FILTRES que la page de visualisation
+    query = request.GET.get('q', '')
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    caissier_id = request.GET.get('caissier')
+
+    if query:
+        factures = factures.filter(numero_facture__icontains=query)
+    if date_debut:
+        factures = factures.filter(date_facture__date__gte=date_debut)
+    if date_fin:
+        factures = factures.filter(date_facture__date__lte=date_fin)
+    if caissier_id and caissier_id != 'Tous':
+        factures = factures.filter(utilisateur_id=caissier_id)
+
+    # 3. CALCULER le total (C'est ici qu'on règle ton NameError)
+    total_ttc = sum(f.montant_ttc for f in factures)
+    
+    filename = f"rapport_ventes_{datetime.date.today()}"
+
+    # --- FORMAT CSV ---
+    if format == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['N° Facture', 'Date', 'Client', 'Caissier', 'Montant TTC', 'Statut'])
+        for f in factures:
+            writer.writerow([
+                f.numero_facture, 
+                f.date_facture.strftime('%d/%m/%Y'), 
+                f"{f.client.prenom if f.client else 'Passage'} {f.client.nom if f.client else ''}",
+                f.utilisateur.username,
+                f.montant_ttc, 
+                f.statut
+            ])
+        return response
+
+    # --- FORMAT EXCEL (XLSX) ---
+    elif format == 'excel':
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="{filename}.xlsx"'
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Rapport Ventes"
+        ws.append(['N° Facture', 'Date', 'Client', 'Caissier', 'Montant TTC', 'Statut'])
+        for f in factures:
+            nom_client = f"{f.client.prenom if f.client else 'Passage'} {f.client.nom if f.client else ''}"
+            ws.append([
+                f.numero_facture, 
+                f.date_facture.strftime('%d/%m/%Y'), 
+                nom_client,
+                f.utilisateur.username, 
+                float(f.montant_ttc), 
+                f.statut
+            ])
+        wb.save(response)
+        return response
+
+    # --- FORMAT PDF ---
+    elif format == 'pdf':
+        context = {
+            'factures': factures,
+            'total_ttc': total_ttc, 
+            'date': datetime.date.today(),
+            'caissier': request.GET.get('caissier', 'Tous')
+        }
+        
+        # Transformer le template HTML en texte
+        html_string = render_to_string('facturation/rapport_pdf.html', context)
+        
+        # Créer la réponse PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}.pdf"'
+        
+        # Générer le PDF avec WeasyPrint
+        HTML(string=html_string).write_pdf(response)
+        return response
+
+    return redirect('facturations_admin')
+
+# VUE POUR LES DÉTAILS (AJAX)
+def facture_detail_api(request, facture_id):
+    facture = get_object_or_404(Facture, id=facture_id)
+    lignes = LigneFacture.objects.filter(facture=facture)
+    data = {
+        'numero': facture.numero_facture,
+        'date': facture.date_facture.strftime('%d/%m/%Y %H:%M'),
+        'client': str(facture.client) if facture.client else "Passage",
+        'caissier': facture.utilisateur.username,
+        'total_ht': float(facture.montant_ht),
+        'total_tva': float(facture.montant_tva),
+        'total_ttc': float(facture.montant_ttc),
+        'lignes': [
+            {'article': l.article.nom, 'qty': float(l.quantite), 'prix': float(l.prix_unitaire_ht), 'total': float(l.quantite * l.prix_unitaire_ht)}
+            for l in lignes
+        ]
+    }
+    return JsonResponse(data)
+
+# VUE POUR L'IMPRESSION (HTML)
+def imprimer_facture(request, facture_id):
+    # Récupère la facture ou affiche une erreur 404 si elle n'existe pas
+    facture = get_object_or_404(Facture, id=facture_id)
+    # Récupère tous les articles liés à cette facture
+    lignes = LigneFacture.objects.filter(facture=facture)
+    
+    context = {
+        'facture': facture,
+        'lignes': lignes,
+    }
+    # On utilise un template spécial pour l'impression (sans sidebar ni menus)
+    return render(request, 'facturation/facture_print.html', context)
 
 
 # =========================[ fin du dashboard admin ]============================

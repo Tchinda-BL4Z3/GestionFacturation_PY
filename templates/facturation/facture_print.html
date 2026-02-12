@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Facture #{{ facture.numero_facture }}</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; color: #333; }
+        .header { text-align: center; margin-bottom: 40px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; }
+        .total { text-align: right; margin-top: 20px; font-weight: bold; font-size: 1.2em; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="no-print">
+        <button onclick="window.history.back()">⬅ Retour</button>
+        <button onclick="window.print()">🖨 Imprimer</button>
+    </div>
+
+    <div class="header">
+        <h1>SUPERMARCHÉ - REÇU</h1>
+        <p>Facture N° : <strong>{{ facture.numero_facture }}</strong></p>
+        <p>Date : {{ facture.date_facture|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Article</th>
+                <th>Qté</th>
+                <th>Prix Unit.</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for l in lignes %}
+            <tr>
+                <td>{{ l.article.nom }}</td>
+                <td>{{ l.quantite }}</td>
+                <td>{{ l.prix_unitaire_ht }} FCFA</td>
+                <td>{{ l.total_ttc }} FCFA</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="total">
+        <p>Total TTC : {{ facture.montant_ttc }} FCFA</p>
+    </div>
+</body>
+</html>

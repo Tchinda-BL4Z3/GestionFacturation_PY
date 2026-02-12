@@ -8,7 +8,7 @@
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
     body {
         font-family: 'Manrope', sans-serif;
-        background-image: linear-gradient(to bottom, rgba(10, 10, 12, 0.9), rgba(10, 10, 12, 0.98)),
+        background-image: linear-gradient(to bottom, rgba(10, 10, 12, 0.7), rgba(10, 10, 12, 0.85)),
                           url("{% static 'img/fond_supermarche.jpeg' %}");
         background-attachment: fixed; background-size: cover;
     }
@@ -85,6 +85,7 @@
                                 <th class="px-6 py-4">Produit & Unité</th>
                                 <th class="px-6 py-4">Code-barres</th>
                                 <th class="px-6 py-4 text-center">Stock</th>
+                                <th class="px-6 py-4 text-center">Unité de mesure</th>
                                 <th class="px-6 py-4 text-right">Prix HT</th>
                                 <th class="px-6 py-4 text-center w-24">Actions</th>
                             </tr>
@@ -92,9 +93,11 @@
                         <tbody class="divide-y divide-border-dark">
                             {% for art in cat.article_set.all %}
                             <tr class="table-row-hover transition-colors">
-                                <td class="px-6 py-4 flex flex-col">
-                                    <span class="font-bold text-white">{{ art.nom }}</span>
-                                    <span class="text-[9px] text-electric-blue font-black uppercase tracking-widest mt-0.5">Vendu à la {{ art.unite_mesure }}</span>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-white">{{ art.nom }}</span>
+                                        <span class="text-[9px] text-slate-500 uppercase tracking-tighter">{{ art.unite_mesure }}</span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 font-mono text-xs text-slate-400">{{ art.code_barres }}</td>
                                 <td class="px-6 py-4 text-center">
@@ -106,14 +109,17 @@
                                         <span class="font-bold text-emerald-400">{{ art.stock_actuel }}</span>
                                     {% endif %}
                                 </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="px-2.5 py-1 rounded bg-white/5 border border-white/10 text-[10px] text-slate-300 font-bold uppercase tracking-widest">
+                                        {{ art.unite_mesure }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 text-right font-mono font-bold text-white">{{ art.prix_ht|floatformat:0 }} FCFA</td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-3">
-                                        <!-- BOUTON ÉDITION -->
                                         <button onclick="openEditModal('{{ art.id }}', '{{ art.nom|escapejs }}', '{{ art.categorie.id }}', '{{ art.unite_mesure }}', '{{ art.code_barres }}', '{{ art.prix_ht|stringformat:'.2f' }}', '{{ art.stock_actuel }}', '{{ art.stock_minimum }}')" class="text-slate-500 hover:text-amber-500 transition-all">
                                             <span class="material-symbols-outlined">edit</span>
                                         </button>
-                                        <!-- BOUTON SUPPRESSION (NOUVEAU) -->
                                         <button onclick="openDeleteModal('{{ art.id }}', '{{ art.nom|escapejs }}')" class="text-slate-500 hover:text-red-500 transition-all">
                                             <span class="material-symbols-outlined">delete</span>
                                         </button>
@@ -122,7 +128,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-slate-500 italic">Aucun produit ne correspond à votre recherche.</td>
+                                <td colspan="6" class="px-6 py-8 text-center text-slate-500 italic">Aucun produit ne correspond à votre recherche.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -139,7 +145,7 @@
         </section>
     </div>
 
-    <!-- MODAL DE CONFIRMATION DE SUPPRESSION (NOUVEAU) -->
+    <!-- MODAL DE CONFIRMATION DE SUPPRESSION -->
     <div id="deleteModal" class="fixed inset-0 z-[110] hidden flex items-center justify-center px-4">
         <div class="absolute inset-0 bg-black/90 backdrop-blur-sm" onclick="toggleDeleteModal()"></div>
         <div class="relative w-full max-w-md bg-surface-dark border border-red-500/30 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
@@ -320,7 +326,6 @@
         document.getElementById('editModal').classList.toggle('hidden');
     }
 
-    // NOUVELLE FONCTION POUR LE MODAL DE SUPPRESSION
     function toggleDeleteModal() {
         document.getElementById('deleteModal').classList.toggle('hidden');
     }
@@ -337,7 +342,6 @@
         toggleEditModal();
     }
 
-    // FONCTION POUR OUVRIR LE MODAL DE SUPPRESSION ET REMPLIR LES INFOS
     function openDeleteModal(id, nom) {
         document.getElementById('delete_article_id').value = id;
         document.getElementById('delete_item_name').innerText = nom;

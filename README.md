@@ -1,100 +1,108 @@
-Voici un fichier **README.md** complet et professionnel qui récapitule tout le travail accompli jusqu'à présent. Ce document servira de guide de référence pour ton projet.
-
----
 
 # 🛒 SUPER-FACTU : Système de Gestion de Facturation
 
-**SUPER-FACTU** est une application web moderne de gestion de facturation et d'inventaire conçue pour les supermarchés. Elle offre une interface premium, sombre et réactive, permettant un suivi précis des ventes et des stocks.
+**SUPER-FACTU** est une application web moderne de gestion de facturation et d'inventaire conçue pour les supermarchés. Elle offre une interface premium, sombre et réactive, permettant un suivi précis des ventes, des stocks et de la clientèle.
 
 ## 🚀 Fonctionnalités Développées
 
 ### 🛡️ Authentification Multi-Profils
-*   **Espace Administrateur (Patron) :** Connexion sécurisée via E-mail et Mot de passe.
-*   **Espace Caissier :** Ouverture de session simplifiée via Identifiant Employé et Code PIN numérique.
-*   **Espace Comptable :** (Structure prête pour déploiement).
+*   **Espace Administrateur (Patron) :** Accès total aux statistiques, stocks et gestion des comptes.
+*   **Espace Caissier :** Interface simplifiée pour l'enregistrement des ventes.
 
-### 📊 Tableau de Bord Administrateur (Dashboard)
-*   **Statistiques en temps réel :** Chiffre d'affaires global, nombre de transactions, et total clients.
-*   **Alertes de Stock :** Indicateur visuel immédiat pour les produits en rupture ou sous le seuil critique.
-*   **Top 5 Produits :** Affichage des meilleures ventes avec revenus générés.
-*   **Journal d'activité :** Flux des dernières factures éditées.
+### 📊 Tableau de Bord & Reporting (Admin)
+*   **Statistiques en temps réel :** Chiffre d'affaires, volume de transactions et alertes de stock bas.
+*   **Centre d'Exportation :** Exportation des rapports de ventes filtrés en trois formats :
+    *   **Excel (.xlsx) :** Pour une analyse comptable approfondie.
+    *   **PDF :** Pour des rapports officiels prêts à imprimer (via WeasyPrint).
+    *   **CSV :** Pour l'importation de données brutes.
 
-### 💰 Suivi des Ventes
-*   **Historique Global :** Liste exhaustive de toutes les transactions avec filtrage par numéro de facture.
-*   **Analyse de Performance :** Calcul automatique du panier moyen et de la vente record.
-*   **Détails des Paiements :** Identification du mode de paiement (CB, Espèces) et du caissier responsable.
+### 👥 Gestion de la Clientèle
+*   **Répertoire Dynamique :** Recherche instantanée par nom, téléphone ou ID.
+*   **Gestion de Comptes :** Possibilité d'activer ou de bloquer un client (Statut actif/inactif).
+*   **Fidélité :** Calcul automatique des points de fidélité basés sur le volume d'achat.
+*   **Historique Individuel :** Consultation des 10 dernières factures par client via un modal dédié.
 
-### 📦 Gestion des Stocks (Inventaire)
-*   **Vue par Catégories :** Organisation structurée (Alimentaire vs Non-Alimentaire) avec système de dossiers dépliables.
-*   **Indicateurs Critiques :** Mise en évidence visuelle (Néon Rouge) des produits nécessitant un réapprovisionnement.
-*   **Valeur Marchande :** Calcul automatique de la valeur totale du stock HT.
-
----
-
-## 🔑 Identifiants de Test
-
-Pour accéder aux différentes interfaces développées, utilisez les comptes suivants :
-
-### 👨‍💼 Profil : Administrateur (Patron)
-*   **URL :** `/login/admin/`
-*   **E-mail :** `admin@gmail.com`
-*   **Mot de passe :** `admin1234`
-
-### 🧑‍ cashier Profil : Caissier
-*   **URL :** `/login/caissier/`
-*   **ID Employé :** `EMP-123`
-*   **Code PIN :** `1234`
+### 📦 Gestion des Stocks & Ventes
+*   **Inventaire Intelligent :** Suivi des stocks avec indicateurs visuels néon pour les ruptures.
+*   **Historique de Facturation :** Filtrage avancé par date, numéro de facture et caissier.
+*   **Détails de Vente :** Consultation granulaire des articles vendus pour chaque facture.
 
 ---
 
-## 🛠️ Stack Technique
-*   **Backend :** Python 3.x, Django 5.x
-*   **Base de données :** PostgreSQL (Gestion des transactions et intégrité référentielle)
-*   **Frontend :** HTML5, Tailwind CSS (Design Premium Dark Mode)
-*   **Icônes :** Google Material Symbols
+## 🛠️ Stack Technique & Dépendances
+
+### Backend & Librairies
+*   **Python 3.10+ / Django 5.x**
+*   **PostgreSQL :** Base de données relationnelle.
+*   **WeasyPrint :** Moteur de rendu PDF professionnel.
+*   **Openpyxl :** Génération de feuilles de calcul Excel.
+*   **Psycopg2-binary :** Connecteur PostgreSQL.
+
+### Frontend
+*   **Tailwind CSS :** Design Dark Mode Premium.
+*   **Material Symbols :** Bibliothèque d'icônes Google.
 
 ---
 
-## 📂 Structure du Projet
-```text
-GestionFacture_PY/
-├── config/                  # Configuration Django (settings, urls)
-├── facturation/             # Application métier
-│   ├── models.py            # Schéma PostgreSQL (Articles, Factures, Clients)
-│   ├── views.py             # Logique métier et calculs statistiques
-│   └── admin.py             # Configuration du panneau d'administration
-├── templates/               
-│   ├── layouts/             # adminLayout.html (Base commune avec Sidebar)
-│   └── facturation/         # Pages (Dashboard, Ventes, Stocks, Logins)
-├── static/                  # Assets (Images de fond, CSS personnalisé)
-└── manage.py                # Point d'entrée des commandes
+## ⚙️ Installation et Configuration
+
+### 1. Prérequis Système (Linux/Ubuntu)
+Pour générer les rapports PDF, certaines bibliothèques graphiques sont nécessaires sur le système :
+```bash
+sudo apt-get update
+sudo apt-get install python3-pip python3-cffi python3-brotli libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0
+```
+
+### 2. Installation du projet
+1. **Environnement virtuel :**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   ```
+2. **Installation des dépendances Python :**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+### 3. Base de données PostgreSQL
+* Créer une base de données nommée `supermarche_db`.
+* Configurer vos accès (User/Password) dans le fichier `config/settings.py`.
+
+### 4. Initialisation
+```bash
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser  
+python manage.py runserver
 ```
 
 ---
 
-## ⚙️ Installation Rapide
-1.  **Clonage et Environnement :**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate
-    pip install django psycopg2-binary
-    ```
-2.  **Base de données :**
-    *   Créer une base de données `superfactu_db` dans PostgreSQL.
-    *   Configurer les accès dans `settings.py`.
-3.  **Migrations et Lancement :**
-    ```bash
-    python manage.py makemigrations
-    python manage.py migrate
-    python manage.py runserver
-    ```
+## 📝 Contenu du fichier `requirements.txt`
+```text
+Django>=5.0
+psycopg2-binary
+djangorestframework
+openpyxl
+weasyprint
+```
 
 ---
 
-## 📅 Prochaines Étapes
-1.  **Interface de Caisse Interactive :** Développement du panier de vente avec scanner de code-barres (JavaScript).
-2.  **Génération de PDF :** Impression automatique du ticket de caisse après validation.
-3.  **Gestion des Clients :** Système de carte de fidélité et historique par client.
+## 🔑 Identifiants de Test (Développement)
+
+| Profil | Identifiant | Mot de passe / PIN |
+| :--- | :--- | :--- |
+| **Administrateur** | `admin@gmail.com` | `admin1234` |
+| **Caissier** | `EMP-001` | `caissier001` |
 
 ---
-*Ce projet suit scrupuleusement le Cahier des Charges "Application de Gestion de la Facturation - Supermarché" version 1.0.*
+
+## 📂 Organisation des fichiers clés
+*   `facturation/models.py` : Structure des données (Article, Client, Facture).
+*   `facturation/views.py` : Logique d'exportation et calculs statistiques.
+*   `templates/facturation/rapport_pdf.html` : Mise en page du document PDF.
+*   `facturation/templatetags/` : Filtres personnalisés pour les calculs en template.
+
+---
+*Ce document est mis à jour périodiquement suivant l'évolution du projet conformément au Cahier des Charges initial.*

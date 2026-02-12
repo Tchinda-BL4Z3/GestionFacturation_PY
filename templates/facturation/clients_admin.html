@@ -2,13 +2,13 @@
 {% load custom_filters %}
 {% load static %}
 
-{% block title %}SUPER-FACTU | Répertoire Clients{% endblock %}
+{% block title %}SUPER-FACTU | Gestion des Comptes Clients{% endblock %}
 
 {% block extra_style %}
 <style>
     body {
         background-image: 
-            linear-gradient(to bottom, rgba(10, 10, 12, 0.9), rgba(10, 10, 12, 0.98)),
+            linear-gradient(to bottom, rgba(10, 10, 12, 0.7), rgba(10, 10, 12, 0.85)),
             url("{% static 'img/fond_supermarche.jpeg' %}");
         background-attachment: fixed;
         background-size: cover;
@@ -18,115 +18,202 @@
         transform: translateY(-4px);
         background: rgba(22, 27, 34, 0.8);
     }
-    .neon-glow {
-        box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
-        border: 1px solid rgba(0, 242, 255, 0.2);
+    .modal-blur {
+        backdrop-filter: blur(12px);
+        background: rgba(10, 10, 12, 0.8);
     }
+    /* Scrollbar pour l'historique dans le modal */
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 10px; }
 </style>
 {% endblock %}
 
-{% block header_title %}Répertoire de la Clientèle{% endblock %}
+{% block header_title %}Gestion des Comptes Clients{% endblock %}
 
 {% block content %}
 <div class="flex-1 overflow-y-auto p-8">
     
-    <!-- FILTRES ET RECHERCHE -->
+    <!-- BARRE DE RECHERCHE ET FILTRES -->
     <div class="flex flex-col lg:flex-row items-center justify-between mb-10 gap-6">
         <div class="flex items-center gap-3 bg-surface-dark/50 p-1.5 rounded-2xl border border-white/5 backdrop-blur-md">
-            <button class="px-6 py-2.5 bg-electric-blue text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-electric-blue/20">Tous ({{ total_clients_count }})</button>
-            <button class="px-6 py-2.5 text-slate-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Top Acheteurs</button>
-            <button class="px-6 py-2.5 text-slate-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Inactifs</button>
+            <a href="?filter=all{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="px-6 py-2.5 {% if filter_type == 'all' %}bg-electric-blue text-white shadow-lg shadow-electric-blue/20{% else %}text-slate-400{% endif %} rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Tous ({{ total_clients_count }})</a>
+            <a href="?filter=top{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="px-6 py-2.5 {% if filter_type == 'top' %}bg-electric-blue text-white shadow-lg shadow-electric-blue/20{% else %}text-slate-400{% endif %} rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Top Acheteurs</a>
+            <a href="?filter=inactive{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" class="px-6 py-2.5 {% if filter_type == 'inactive' %}bg-electric-blue text-white shadow-lg shadow-electric-blue/20{% else %}text-slate-400{% endif %} rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">Inactifs</a>
         </div>
 
-        <div class="flex items-center gap-4 w-full lg:w-auto">
-            <form method="GET" class="relative flex-1 lg:w-80">
-                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">search</span>
-                <input name="q" value="{{ request.GET.q|default:'' }}" class="w-full bg-surface-dark/50 border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:ring-2 focus:ring-electric-blue/30 outline-none backdrop-blur-md" placeholder="Rechercher un client..." type="text">
-            </form>
-            <a href="/admin/facturation/client/add/" class="flex items-center gap-2 bg-white text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-xl">
-                <span class="material-symbols-outlined text-lg">person_add</span> Nouveau
-            </a>
-        </div>
+        <form method="GET" class="relative w-full lg:w-96">
+            <input type="hidden" name="filter" value="{{ filter_type }}">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">search</span>
+            <input name="q" value="{{ request.GET.q|default:'' }}" class="w-full bg-surface-dark/50 border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-sm text-white focus:ring-2 focus:ring-electric-blue/30 outline-none backdrop-blur-md" placeholder="Rechercher par nom, prénom ou ID..." type="text">
+        </form>
     </div>
+
+    <!-- MESSAGES DE CONFIRMATION -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="mb-6 p-4 rounded-xl {% if message.tags == 'success' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% else %}bg-red-500/10 text-red-400 border border-red-500/20{% endif %} flex items-center gap-3 animate-bounce">
+            <span class="material-symbols-outlined">{% if message.tags == 'success' %}check_circle{% else %}error{% endif %}</span>
+            <p class="text-xs font-bold uppercase tracking-wider">{{ message }}</p>
+        </div>
+        {% endfor %}
+    {% endif %}
 
     <!-- GRILLE DE CLIENTS -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
         {% for client in clients %}
-        <div class="client-card bg-surface-dark/60 border border-white/5 p-6 rounded-3xl backdrop-blur-md transition-all duration-300 flex flex-col group">
+        <div class="client-card bg-surface-dark/60 border border-white/5 p-6 rounded-3xl backdrop-blur-md transition-all duration-300 flex flex-col group relative overflow-hidden">
+            
+            <!-- Indicateur de statut -->
+            <div class="absolute top-0 right-0 p-4">
+                <span class="flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full {% if client.actif %}bg-emerald-400{% else %}bg-red-500{% endif %} opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 {% if client.actif %}bg-emerald-500{% else %}bg-red-600{% endif %}"></span>
+                </span>
+            </div>
+
             <div class="flex justify-between items-start mb-6">
                 <div class="size-14 rounded-2xl bg-gradient-to-br from-electric-blue to-neon-blue flex items-center justify-center text-white font-black text-xl shadow-lg shadow-electric-blue/20">
-                    {{ client.nom|slice:":1" }}{{ client.prenom|slice:":1" }}
+                    {{ client.nom|slice:":1"|upper }}{{ client.prenom|slice:":1"|upper }}
                 </div>
-                {% if client.total_depense > 100000 %}
-                    <span class="px-3 py-1 rounded-full text-[9px] bg-amber-500/10 text-amber-500 font-black border border-amber-500/20 uppercase tracking-tighter">⭐ Top Acheteur</span>
-                {% elif client.dernier_achat %}
-                    <span class="px-3 py-1 rounded-full text-[9px] bg-emerald-500/10 text-emerald-400 font-black border border-emerald-500/20 uppercase tracking-tighter">Actif</span>
-                {% else %}
-                    <span class="px-3 py-1 rounded-full text-[9px] bg-slate-500/10 text-slate-500 font-black border border-slate-500/20 uppercase tracking-tighter">Nouveau</span>
-                {% endif %}
+                <div class="flex flex-col items-end gap-1">
+                    {% if client.total_depense and client.total_depense > 100000 %}
+                        <span class="px-3 py-1 rounded-full text-[8px] bg-amber-500/10 text-amber-500 font-black border border-amber-500/20 uppercase">⭐ VIP</span>
+                    {% endif %}
+                    <span class="px-3 py-1 rounded-full text-[8px] font-black border uppercase {% if client.actif %}bg-emerald-500/10 text-emerald-400 border-emerald-500/20{% else %}bg-red-500/10 text-red-400 border-red-500/20{% endif %}">
+                        {% if client.actif %}Actif{% else %}Bloqué{% endif %}
+                    </span>
+                </div>
             </div>
 
             <div class="mb-6">
                 <h3 class="text-lg font-extrabold text-white mb-1 group-hover:text-neon-blue transition-colors">{{ client.prenom }} {{ client.nom }}</h3>
-                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">ID: #CL-{{ client.id|stringformat:"04d" }} • Tel: {{ client.telephone|default:"Non renseigné" }}</p>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Client #{{ client.id|stringformat:"05d" }} • {{ client.telephone|default:"Aucun contact" }}</p>
             </div>
 
             <div class="grid grid-cols-2 gap-4 mb-8">
-                <div class="bg-background-dark/40 p-4 rounded-2xl border border-white/5">
-                    <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Points Fidélité</p>
-                    <p class="text-xl font-black text-neon-blue">
-                        {# Simulation : 1 point par tranche de 100 FCFA #}
-                        {{ client.total_depense|default:0|divide_by:100|floatformat:0 }}
-                    </p>
+                <div class="bg-background-dark/40 p-4 rounded-2xl border border-white/5 text-center">
+                    <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1">Points</p>
+                    <p class="text-lg font-black text-neon-blue">{{ client.total_depense|default:0|divide_by:100|floatformat:0 }}</p>
                 </div>
-                <div class="bg-background-dark/40 p-4 rounded-2xl border border-white/5">
-                    <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Dernier Achat</p>
-                    <p class="text-[11px] font-bold text-white">
-                        {% if client.dernier_achat %}
-                            {{ client.dernier_achat|date:"d M Y" }}
-                        {% else %}
-                            Aucun
-                        {% endif %}
-                    </p>
+                <div class="bg-background-dark/40 p-4 rounded-2xl border border-white/5 text-center">
+                    <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1">Achats</p>
+                    <p class="text-lg font-black text-white">{{ client.nb_achats }}</p>
                 </div>
             </div>
 
             <div class="mt-auto pt-6 border-t border-white/5 flex items-center justify-between">
                 <div>
-                    <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest">Valeur Client</p>
-                    <p class="text-base font-black text-white">{{ client.total_depense|default:0|floatformat:0 }} <span class="text-[10px] font-normal text-slate-500">FCFA</span></p>
+                    <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest">Volume Achat</p>
+                    <p class="text-sm font-black text-white">{{ client.total_depense|default:0|floatformat:0 }} <span class="text-[10px] text-slate-500">FCFA</span></p>
                 </div>
-                <div class="flex gap-2">
-                    <a href="/admin/facturation/client/{{ client.id }}/change/" class="size-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:bg-electric-blue hover:text-white transition-all">
-                        <span class="material-symbols-outlined text-lg">edit</span>
-                    </a>
+                <!-- BOUTON EDIT (Ouvre le modal) -->
+                <button onclick="toggleModal('modal-{{ client.id }}')" class="size-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:bg-electric-blue hover:text-white transition-all">
+                    <span class="material-symbols-outlined text-lg">settings</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL DE GESTION DU CLIENT -->
+        <div id="modal-{{ client.id }}" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 modal-blur overflow-y-auto">
+            <div class="bg-surface-dark w-full max-w-2xl rounded-3xl border border-white/10 shadow-2xl relative">
+                
+                <!-- Header Modal -->
+                <div class="p-8 border-b border-white/5 flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div class="size-12 rounded-xl bg-electric-blue flex items-center justify-center text-white font-black">{{ client.nom|slice:":1" }}</div>
+                        <div>
+                            <h2 class="text-xl font-black text-white">{{ client.prenom }} {{ client.nom }}</h2>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Gestion du profil utilisateur</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleModal('modal-{{ client.id }}')" class="text-slate-500 hover:text-white"><span class="material-symbols-outlined">close</span></button>
+                </div>
+
+                <div class="p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Colonne Gauche : Actions de compte -->
+                        <div class="space-y-6">
+                            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paramètres du compte</h4>
+                            
+                            <!-- Activer / Désactiver -->
+                            <form method="POST" class="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center justify-between">
+                                {% csrf_token %}
+                                <input type="hidden" name="client_id" value="{{ client.id }}">
+                                <input type="hidden" name="action" value="toggle_status">
+                                <div>
+                                    <p class="text-xs font-bold">Statut du compte</p>
+                                    <p class="text-[10px] text-slate-500">{% if client.actif %}Le client peut passer commande{% else %}Le compte est suspendu{% endif %}</p>
+                                </div>
+                                <button type="submit" class="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all {% if client.actif %}bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white{% else %}bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white{% endif %}">
+                                    {% if client.actif %}Bloquer{% else %}Activer{% endif %}
+                                </button>
+                            </form>
+
+                            <!-- Supprimer (Zone Dangereuse) -->
+                            <div class="bg-red-500/5 p-4 rounded-2xl border border-red-500/20">
+                                <p class="text-xs font-bold text-red-400 mb-4">Zone de suppression</p>
+                                <form method="POST" class="space-y-3">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="client_id" value="{{ client.id }}">
+                                    <input type="hidden" name="action" value="delete_client">
+                                    <input type="password" name="admin_password" placeholder="Mot de passe admin pour confirmer" class="w-full bg-black/40 border-white/10 rounded-xl py-3 px-4 text-xs text-white focus:ring-1 focus:ring-red-500 outline-none" required>
+                                    <button type="submit" class="w-full py-3 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all">Supprimer définitivement</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Colonne Droite : Historique -->
+                        <div class="space-y-4">
+                            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Historique des achats récents</h4>
+                            <div class="max-h-64 overflow-y-auto custom-scroll space-y-3 pr-2">
+                                {% for facture in client.facture_set.all|dictsortreversed:"date_facture"|slice:":10" %}
+                                <div class="bg-white/5 p-4 rounded-xl border border-white/5 flex justify-between items-center">
+                                    <div>
+                                        <p class="text-[10px] font-bold text-white">#{{ facture.numero_facture }}</p>
+                                        <p class="text-[8px] text-slate-500 uppercase">{{ facture.date_facture|date:"d M Y" }}</p>
+                                    </div>
+                                    <p class="text-xs font-black text-electric-blue">{{ facture.montant_ttc|floatformat:0 }} <span class="text-[8px] font-normal">FCFA</span></p>
+                                </div>
+                                {% empty %}
+                                <p class="text-[10px] text-slate-600 italic text-center py-10">Aucun historique d'achat.</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         {% empty %}
         <div class="col-span-full py-20 text-center">
-            <span class="material-symbols-outlined text-6xl text-slate-700 mb-4">group_off</span>
-            <p class="text-slate-500 font-bold">Aucun client trouvé dans la base de données.</p>
+            <span class="material-symbols-outlined text-6xl text-slate-700 mb-4">search_off</span>
+            <p class="text-slate-500 font-bold tracking-widest uppercase text-xs">Aucun client trouvé pour "{{ request.GET.q }}"</p>
         </div>
         {% endfor %}
-
-        <!-- Carte d'ajout rapide -->
-        <a href="/admin/facturation/client/add/" class="border-2 border-dashed border-white/5 p-6 rounded-3xl flex flex-col items-center justify-center text-slate-500 hover:border-electric-blue/50 hover:text-electric-blue transition-all cursor-pointer group bg-white/[0.01]">
-            <div class="size-14 rounded-2xl bg-surface-dark flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <span class="material-symbols-outlined text-3xl">add</span>
-            </div>
-            <p class="text-xs font-black uppercase tracking-widest">Enregistrer un client</p>
-        </a>
     </div>
 
     <!-- PAGINATION -->
-    <div class="mt-12 pt-8 border-t border-white/5 flex items-center justify-between">
-        <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Base de données : {{ total_clients_count }} Entrées</p>
-        <div class="flex items-center gap-2">
+    <div class="mt-12 pt-8 border-t border-white/5 flex items-center justify-between bg-black/10 px-6 rounded-2xl">
+        <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Gestion Admin : {{ clients.count }} Comptes affichés</p>
+        <div class="flex items-center gap-2 py-4">
             <button class="size-10 flex items-center justify-center rounded-xl border border-white/5 text-slate-500 hover:text-white hover:bg-white/5 transition-all"><span class="material-symbols-outlined">chevron_left</span></button>
             <button class="size-10 flex items-center justify-center rounded-xl bg-electric-blue text-white text-xs font-black shadow-lg shadow-electric-blue/20">1</button>
             <button class="size-10 flex items-center justify-center rounded-xl border border-white/5 text-slate-500 hover:text-white hover:bg-white/5 transition-all"><span class="material-symbols-outlined">chevron_right</span></button>
         </div>
     </div>
 </div>
+
+<script>
+    function toggleModal(id) {
+        const modal = document.getElementById(id);
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden'; // Bloque le scroll arrière
+        } else {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        }
+    }
+</script>
 {% endblock %}

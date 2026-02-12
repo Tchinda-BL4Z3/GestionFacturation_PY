@@ -32,6 +32,7 @@ class Client(models.Model):
     telephone = models.CharField(max_length=20, blank=True)
     email = models.EmailField(blank=True)
     carte_fidelite = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    actif = models.BooleanField(default=True)
 
 class Facture(models.Model):
     MODE_PAIEMENT = [
