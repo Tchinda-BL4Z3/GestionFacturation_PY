@@ -27,11 +27,12 @@ class Article(models.Model):
         return self.prix_ht * (1 + self.taux_tva / 100)
 
 class Client(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True) 
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
-    telephone = models.CharField(max_length=20, blank=True)
-    email = models.EmailField(blank=True)
-    carte_fidelite = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    telephone = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    solde = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
     actif = models.BooleanField(default=True)
 
 class Facture(models.Model):

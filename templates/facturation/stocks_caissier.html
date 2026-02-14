@@ -1,0 +1,87 @@
+{% extends 'layouts/caissierLayout.html' %}
+{% load static %}
+
+{% block content %}
+<header class="h-16 border-b border-white/5 flex items-center justify-between px-8 shrink-0 bg-black/20 backdrop-blur-sm">
+    <form method="GET" class="flex items-center gap-4 w-1/2">
+        <div class="relative w-full">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">search</span>
+            <input name="q" value="{{ query }}" class="w-full bg-white/5 border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white outline-none focus:ring-1 focus:ring-neon-blue" placeholder="Rechercher un produit ou code-barres..."/>
+        </div>
+    </form>
+    <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+            <span class="size-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            <span class="text-[10px] font-bold text-emerald-400 uppercase">En ligne</span>
+        </div>
+    </div>
+</header>
+
+<div class="flex-1 overflow-y-auto p-8">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h2 class="text-2xl font-black text-white">État des Stocks</h2>
+            <p class="text-sm text-slate-500">Consultation en temps réel des articles disponibles.</p>
+        </div>
+        <form method="GET" class="flex gap-3">
+            <select name="category" onchange="this.form.submit()" class="bg-surface-dark border-white/10 rounded-lg text-xs font-bold text-slate-400 px-4 py-2 outline-none">
+                <option value="all">Toutes les catégories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}" {% if cat_id == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nom }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <div class="bg-surface-dark/60 rounded-2xl border border-white/5 overflow-hidden backdrop-blur-md">
+        <table class="w-full text-left text-sm">
+            <thead>
+                <tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-white/5 bg-black/20">
+                    <th class="px-6 py-5 font-black">Produit</th>
+                    <th class="px-6 py-5 font-black">Catégorie</th>
+                    <th class="px-6 py-5 font-black text-right">Prix (TTC)</th>
+                    <th class="px-6 py-5 font-black text-center">Quantité</th>
+                    <th class="px-6 py-5 font-black text-center">Statut</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+                {% for article in articles %}
+                <tr class="hover:bg-white/5 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="size-10 bg-electric-blue/10 rounded-lg flex items-center justify-center text-electric-blue">
+                                <span class="material-symbols-outlined">package_2</span>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-200">{{ article.nom }}</p>
+                                <p class="text-[10px] text-slate-500 font-mono">{{ article.code_barres }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4"><span class="text-xs text-slate-400">{{ article.categorie.nom }}</span></td>
+                    <td class="px-6 py-4 text-right font-mono font-bold text-white">{{ article.prix_ttc|floatformat:0 }} <span class="text-[9px]">FCFA</span></td>
+                    <td class="px-6 py-4 text-center font-bold">
+                        <span class="{% if article.stock_actuel == 0 %}text-red-500{% elif article.stock_actuel <= article.stock_minimum %}text-amber-500{% else %}text-slate-200{% endif %}">
+                            {{ article.stock_actuel }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        {% if article.stock_actuel == 0 %}
+                            <span class="px-3 py-1 rounded-full text-[9px] bg-red-500/10 text-red-500 border border-red-500/20 font-black uppercase">Rupture</span>
+                        {% elif article.stock_actuel <= article.stock_minimum %}
+                            <span class="px-3 py-1 rounded-full text-[9px] bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black uppercase">Stock Faible</span>
+                        {% else %}
+                            <span class="px-3 py-1 rounded-full text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black uppercase">Disponible</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="py-20 text-center text-slate-500 font-bold italic">Aucun article trouvé.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

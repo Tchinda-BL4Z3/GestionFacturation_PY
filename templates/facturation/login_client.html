@@ -47,13 +47,21 @@
         .hero-gradient { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.08) 0%, transparent 70%); }
         .input-field { @apply w-full bg-background-dark/50 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-500 focus:border-electric-blue focus:ring-1 focus:ring-electric-blue transition-all outline-none; }
 
-        /* Animation pour le modal */
+        /* Animation pour le modal de succès */
         @keyframes modalBounce {
             0% { transform: scale(0.9); opacity: 0; }
             70% { transform: scale(1.05); }
             100% { transform: scale(1); opacity: 1; }
         }
         .animate-success { animation: modalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        /* Barre de progression de redirection */
+        .progress-bar {
+            height: 3px;
+            background: #2563eb;
+            width: 0%;
+            transition: width 3s linear;
+        }
     </style>
 </head>
 <body class="text-white antialiased font-display min-h-screen flex flex-col">
@@ -64,7 +72,7 @@
             <div class="size-10 bg-primary rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
                 <span class="material-symbols-outlined">storefront</span>
             </div>
-            <a href="{% url 'home' %}" class="text-white text-xl font-extrabold tracking-tight">SUPER-FACTU</a>
+            <a href="{% url 'home' %}" class="text-white text-xl font-extrabold tracking-tight italic">SUPER-FACTU</a>
         </div>
         <div class="hidden md:flex items-center gap-8">
             <a class="text-sm font-semibold text-slate-400 hover:text-white transition-colors" href="#">Aide</a>
@@ -98,7 +106,7 @@
                     <label class="text-sm font-medium text-slate-300 ml-1" for="identifier">E-mail</label>
                     <div class="relative">
                         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">alternate_email</span>
-                        <input class="input-field pl-12" id="identifier" name="email" placeholder=" nom@exemple.com" type="email" required/>
+                        <input class="input-field pl-14" id="identifier" name="email" placeholder="nom@exemple.com" type="email" required/>
                     </div>
                 </div>
                 <div class="space-y-2">
@@ -108,7 +116,7 @@
                     </div>
                     <div class="relative">
                         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">lock</span>
-                        <input class="input-field pl-12" id="password" name="password" placeholder=" ••••••••" type="password" required/>
+                        <input class="input-field pl-14" id="password" name="password" placeholder="••••••••" type="password" required/>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 px-1">
@@ -143,22 +151,39 @@
     <div class="absolute inset-0 bg-background-dark/90 backdrop-blur-2xl"></div>
     
     <!-- Contenu du Modal -->
-    <div class="relative glass-card w-full max-w-sm p-10 rounded-[2.5rem] border border-electric-blue/30 text-center animate-success shadow-2xl shadow-electric-blue/10">
+    <div class="relative glass-card w-full max-w-sm p-10 rounded-[2.5rem] border border-electric-blue/30 text-center animate-success shadow-2xl shadow-electric-blue/10 overflow-hidden">
         <div class="size-24 bg-electric-blue rounded-3xl flex items-center justify-center mx-auto mb-8 rotate-12 shadow-xl shadow-electric-blue/20">
             <span class="material-symbols-outlined text-5xl text-white -rotate-12">verified</span>
         </div>
         
         <h3 class="text-2xl font-black text-white mb-3">Accès Autorisé</h3>
-        <p class="text-slate-400 text-sm leading-relaxed mb-10">
+        <p class="text-slate-400 text-sm leading-relaxed mb-8">
             Ravi de vous revoir ! Votre connexion a été établie avec succès. Vous allez être redirigé vers votre espace personnel.
         </p>
         
-        <!-- Redirection vers le tableau de bord client (à créer) ou accueil -->
-        <a href="{% url 'home' %}" class="block w-full py-4 bg-white text-background-dark font-black rounded-2xl shadow-xl hover:bg-slate-200 transition-all transform active:scale-95 uppercase tracking-widest text-xs">
-            Accéder à mon tableau de bord
+        <!-- Barre de chargement visuelle -->
+        <div class="w-full bg-white/5 h-1 rounded-full mb-8 overflow-hidden">
+            <div id="loadingBar" class="progress-bar"></div>
+        </div>
+        
+        <a href="{% url 'client_dashboard' %}" class="block w-full py-4 bg-white text-background-dark font-black rounded-2xl shadow-xl hover:bg-slate-200 transition-all transform active:scale-95 uppercase tracking-widest text-[10px]">
+            Accéder maintenant
         </a>
     </div>
 </div>
+
+<script>
+    // Script de redirection automatique après 3 secondes
+    window.onload = function() {
+        const bar = document.getElementById('loadingBar');
+        if(bar) {
+            bar.style.width = '100%';
+            setTimeout(function() {
+                window.location.href = "{% url 'client_dashboard' %}";
+            }, 3000);
+        }
+    };
+</script>
 {% endif %}
 
 <footer class="border-t border-border-dark bg-surface-dark/30 py-8">

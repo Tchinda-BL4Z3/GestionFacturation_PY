@@ -14,7 +14,7 @@ from django.db.models import Count
 from django.http import HttpResponse, JsonResponse 
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models.functions import TruncDate 
+from django.db.models.functions import TruncDate, TruncHour
 import csv
 import datetime 
 from django.http import HttpResponse
@@ -709,6 +709,510 @@ def analyse_admin(request):
 
 # =========================[ fin du dashboard admin ]============================
 
+# =========================[ vues pour la gestion caissiers ]====================
+
+def login_caissier(request):
+    if request.method == "POST":
+        identifiant = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        print(f"--- TENTATIVE DE CONNEXION CAISSIER ---")
+        print(f"Identifiant saisi : {identifiant}")
+        
+        user = authenticate(request, username=identifiant, password=password)
+        
+        if user is not None:
+            # On connecte l'utilisateur
+            login(request, user)
+            
+            # On définit le rôle APRES le login (car login() peut réinitialiser la session)
+            request.session['role'] = 'caissier'
+            request.session['is_caissier'] = True
+            
+            # On force l'enregistrement immédiat en base de données
+            request.session.modified = True
+            request.session.save() 
+            
+            print(f"SUCCÈS: {user.username} est authentifié.")
+            print(f"SESSION: Rôle défini sur -> {request.session.get('role')}")
+            print(f"REDIRECTION: Vers dashboard_caissier...")
+            
+            return redirect('dashboard_caissier')
+        else:
+            print("ÉCHEC: Identifiants incorrects.")
+            messages.error(request, "Identifiant ou Code PIN invalide.")
+            
+    return render(request, 'facturation/login_caissier.html')
+
+def logout_view(request):
+    logout(request) 
+    request.session.flush()
+    return redirect('login_caissier')
+
+
+def dashboard_caissier(request):
+    # VERIFICATION DE LA SESSION
+    user_role = request.session.get('role')
+    print(f"--- ACCÈS DASHBOARD CAISSIER ---")
+    print(f"Rôle en session détecté : {user_role}")
+    print(f"Utilisateur connecté : {request.user.username}")
+
+    if user_role != 'caissier':
+        print("ALERTE: Accès refusé (Rôle incorrect ou session expirée). Redirection login...")
+        return redirect('login_caissier')
+
+    # LOGIQUE METIER
+    caissier = request.user
+    aujourdhui = timezone.now().date()
+
+    # 1. Récupérer les factures du caissier pour aujourd'hui
+    factures_session = Facture.objects.filter(
+        utilisateur=caissier, 
+        date_facture__date=aujourdhui
+    ).order_by('-date_facture')
+
+    # 2. Calcul des statistiques de session
+    stats = factures_session.aggregate(total_ca=Sum('montant_ttc'))
+    ca_session = stats['total_ca'] or 0
+    nb_clients = factures_session.count()
+    
+    # 3. Alertes stocks (Articles sous le seuil minimum)
+    alertes_stocks = Article.objects.filter(
+        stock_actuel__lte=F('stock_minimum'), 
+        actif=True
+    ).count()
+
+    print(f"DONNÉES: CA={ca_session}, Clients={nb_clients}, Alertes={alertes_stocks}")
+
+    context = {
+        'factures': factures_session,
+        'ca_session': ca_session,
+        'nb_clients': nb_clients,
+        'alertes_stocks': alertes_stocks,
+        'caissier': caissier,
+        'active_menu': 'dashboard',
+        'date_now': timezone.now(),
+    }
+    return render(request, 'facturation/dashboard_caissier.html', context)
+
+def nouvelle_vente(request):
+    if request.session.get('role') != 'caissier':
+        return redirect('login_caissier')
+
+    # Initialiser le panier s'il n'existe pas
+    if 'panier' not in request.session:
+        request.session['panier'] = {}
+    
+    panier = request.session.get('panier')
+    
+    # Traitement du scan de code-barres (POST)
+    if request.method == "POST":
+        barcode = request.POST.get('barcode')
+        action = request.POST.get('action')
+
+        if action == "add":
+            article = Article.objects.filter(code_barres=barcode, actif=True).first()
+            if article:
+                art_id = str(article.id)
+                if art_id in panier:
+                    panier[art_id]['quantite'] += 1
+                else:
+                    panier[art_id] = {
+                        'nom': article.nom,
+                        'prix': float(article.prix_ht),
+                        'tva': float(article.taux_tva),
+                        'quantite': 1,
+                        'code': article.code_barres
+                    }
+                request.session.modified = True
+            else:
+                messages.error(request, "Article introuvable ou inactif.")
+
+        elif action == "update":
+            art_id = request.POST.get('article_id')
+            op = request.POST.get('op')
+            if art_id in panier:
+                if op == "plus": panier[art_id]['quantite'] += 1
+                elif op == "moins" and panier[art_id]['quantite'] > 1: panier[art_id]['quantite'] -= 1
+                request.session.modified = True
+
+        elif action == "delete":
+            art_id = request.POST.get('article_id')
+            if art_id in panier:
+                del panier[art_id]
+                request.session.modified = True
+
+    # Calculs des totaux
+    sous_total_ht = sum(item['prix'] * item['quantite'] for item in panier.values())
+    total_tva = sum((item['prix'] * item['quantite']) * (item['tva'] / 100) for item in panier.values())
+    total_ttc = sous_total_ht + total_tva
+
+    context = {
+        'panier': panier,
+        'sous_total': sous_total_ht,
+        'total_tva': total_tva,
+        'total_ttc': total_ttc,
+        'active_menu': 'ventes'
+    }
+    return render(request, 'facturation/ventes_caissier.html', context)
+
+# Vue pour finaliser l'encaissement
+def valider_encaissement(request):
+    panier = request.session.get('panier', {})
+    if not panier:
+        return redirect('nouvelle_vente')
+
+    # Création de la facture
+    facture = Facture.objects.create(
+        utilisateur=request.user,
+        mode_paiement="ESPÈCES",
+        statut="valide"
+    )
+
+    total_ht = 0
+    total_tva = 0
+
+    for art_id, data in panier.items():
+        article = Article.objects.get(id=art_id)
+        ligne_ht = Decimal(data['prix']) * data['quantite']
+        ligne_tva = ligne_ht * (Decimal(data['tva']) / 100)
+        
+        LigneFacture.objects.create(
+            facture=facture,
+            article=article,
+            quantite=data['quantite'],
+            prix_unitaire_ht=data['prix'],
+            taux_tva=data['tva']
+        )
+        total_ht += ligne_ht
+        total_tva += ligne_tva
+
+    # Mise à jour des totaux de la facture
+    facture.montant_ht = total_ht
+    facture.montant_tva = total_tva
+    facture.montant_ttc = total_ht + total_tva
+    facture.save()
+
+    # Vider le panier
+    request.session['panier'] = {}
+    messages.success(request, f"Vente #{facture.numero_facture} validée avec succès !")
+    return redirect('dashboard_caissier')
+
+# API pour chercher un article par code-barres ou nom (AJAX)
+def chercher_article(request):
+    q = request.GET.get('q', '')
+    articles = Article.objects.filter(
+        models.Q(code_barres=q) | models.Q(nom__icontains=q),
+        actif=True
+    ).values('id', 'nom', 'code_barres', 'prix_ht', 'taux_tva', 'stock_actuel')
+    
+    return JsonResponse(list(articles), safe=False)
+
+def nouvelle_vente(request):
+    if request.session.get('role') != 'caissier':
+        return redirect('login_caissier')
+
+    # Initialiser le panier s'il n'existe pas
+    if 'panier' not in request.session:
+        request.session['panier'] = {}
+    
+    panier = request.session.get('panier')
+    
+    # Traitement du scan de code-barres (POST)
+    if request.method == "POST":
+        barcode = request.POST.get('barcode')
+        action = request.POST.get('action')
+
+        if action == "add":
+            article = Article.objects.filter(code_barres=barcode, actif=True).first()
+            if article:
+                art_id = str(article.id)
+                if art_id in panier:
+                    panier[art_id]['quantite'] += 1
+                else:
+                    panier[art_id] = {
+                        'nom': article.nom,
+                        'prix': float(article.prix_ht),
+                        'tva': float(article.taux_tva),
+                        'quantite': 1,
+                        'code': article.code_barres
+                    }
+                request.session.modified = True
+            else:
+                messages.error(request, "Article introuvable ou inactif.")
+
+        elif action == "update":
+            art_id = request.POST.get('article_id')
+            op = request.POST.get('op')
+            if art_id in panier:
+                if op == "plus": panier[art_id]['quantite'] += 1
+                elif op == "moins" and panier[art_id]['quantite'] > 1: panier[art_id]['quantite'] -= 1
+                request.session.modified = True
+
+        elif action == "delete":
+            art_id = request.POST.get('article_id')
+            if art_id in panier:
+                del panier[art_id]
+                request.session.modified = True
+
+    # Calculs des totaux
+    sous_total_ht = sum(item['prix'] * item['quantite'] for item in panier.values())
+    total_tva = sum((item['prix'] * item['quantite']) * (item['tva'] / 100) for item in panier.values())
+    total_ttc = sous_total_ht + total_tva
+
+    context = {
+        'panier': panier,
+        'sous_total': sous_total_ht,
+        'total_tva': total_tva,
+        'total_ttc': total_ttc,
+        'active_menu': 'ventes'
+    }
+    return render(request, 'facturation/ventes_caissier.html', context)
+
+# Vue pour traiter la validation de la vente (Appelée en AJAX)
+def valider_vente(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            panier = data.get('panier')
+            client_id = data.get('client_id')
+            mode_paiement = data.get('mode_paiement')
+
+            if not panier:
+                return JsonResponse({'success': False, 'message': 'Le panier est vide'})
+
+            # Utilisation d'une transaction pour garantir que tout est sauvegardé ou rien du tout
+            with transaction.atomic():
+                facture = Facture.objects.create(
+                    utilisateur=request.user,
+                    client_id=client_id if client_id else None,
+                    mode_paiement=mode_paiement,
+                    statut='valide'
+                )
+
+                total_ht = 0
+                total_tva = 0
+                total_ttc = 0
+
+                for item in panier:
+                    article = Article.objects.get(id=item['id'])
+                    quantite = int(item['quantite'])
+                    
+                    # Calculs
+                    p_unit_ht = article.prix_ht
+                    l_total_ttc = float(article.prix_ttc) * quantite
+                    
+                    # Création de la ligne
+                    LigneFacture.objects.create(
+                        facture=facture,
+                        article=article,
+                        quantite=quantite,
+                        prix_unitaire_ht=p_unit_ht,
+                        taux_tva=article.taux_tva
+                    )
+
+                    total_ht += float(p_unit_ht) * quantite
+                    total_ttc += l_total_ttc
+
+                # Mise à jour finale de la facture
+                facture.montant_ht = total_ht
+                facture.montant_ttc = total_ttc
+                facture.montant_tva = total_ttc - total_ht
+                facture.save()
+
+            return JsonResponse({'success': True, 'facture_id': facture.id})
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    return JsonResponse({'success': False, 'message': 'Méthode non autorisée'})
+
+def clients_caissier(request):
+    if request.session.get('role') != 'caissier':
+        return redirect('login_caissier')
+
+    query = request.GET.get('q', '')
+    
+    # On annote chaque client avec ses stats réelles
+    clients_list = Client.objects.filter(actif=True).annotate(
+        total_achats=Sum('facture__montant_ttc'),
+        derniere_fac=Max('facture__numero_facture'),
+        date_dernier=Max('facture__date_facture')
+    ).order_by('-id')
+
+    if query:
+        clients_list = clients_list.filter(
+            Q(nom__icontains=query) | Q(telephone__icontains=query)
+        )
+
+    context = {
+        'clients': clients_list,
+        'active_menu': 'clients'
+    }
+    return render(request, 'facturation/clients_caissier.html', context)
+
+def caissier_achat_rapide(request):
+    if request.session.get('role') != 'caissier':
+        return redirect('login_caissier')
+
+    # Récupération des articles pour la liste de sélection
+    articles = Article.objects.filter(actif=True).order_by('nom')
+
+    if request.method == "POST":
+        article_id = request.POST.get('product')
+        quantite = request.POST.get('quantity')
+        prix_achat = request.POST.get('price')
+        fournisseur = request.POST.get('supplier')
+
+        try:
+            article = Article.objects.get(id=article_id)
+            # Mise à jour du stock réel en BD
+            article.stock_actuel += int(quantite)
+            article.save()
+
+            messages.success(request, f"Stock mis à jour ! +{quantite} {article.nom} ajoutés.")
+            return redirect('caissier_achat_rapide')
+            
+        except Exception as e:
+            messages.error(request, "Erreur lors de l'enregistrement de l'achat.")
+
+    context = {
+        'articles': articles,
+        'active_menu': 'achat',
+        'ref_achat': f"ACH-{timezone.now().strftime('%M%S')}" 
+    }
+    return render(request, 'facturation/achat_caissier.html', context)
+
+def caissier_stocks(request):
+    if request.session.get('role') != 'caissier':
+        return redirect('login_caissier')
+
+    # Récupération des filtres
+    query = request.GET.get('q', '')
+    cat_id = request.GET.get('category', '')
+
+    # Requête de base
+    articles = Article.objects.filter(actif=True).select_related('categorie')
+
+    # Recherche
+    if query:
+        articles = articles.filter(
+            Q(nom__icontains=query) | 
+            Q(code_barres__icontains=query)
+        )
+
+    # Filtre catégorie
+    if cat_id and cat_id != 'all':
+        articles = articles.filter(categorie_id=cat_id)
+
+    context = {
+        'articles': articles,
+        'categories': Categorie.objects.all(),
+        'active_menu': 'stocks',
+        'query': query,
+        'cat_id': cat_id,
+    }
+    return render(request, 'facturation/stocks_caissier.html', context)
+
+def caissier_facturations(request):
+    if request.session.get('role') != 'caissier':
+        return redirect('login_caissier')
+
+    # Récupération des filtres
+    query = request.GET.get('q', '')
+    mode_filtre = request.GET.get('mode', '')
+
+    # On récupère les factures du caissier connecté
+    factures = Facture.objects.filter(utilisateur=request.user).order_by('-date_facture')
+
+    # Logique de recherche
+    if query:
+        factures = factures.filter(
+            Q(numero_facture__icontains=query) | 
+            Q(client__nom__icontains=query) |
+            Q(client__prenom__icontains=query)
+        )
+
+    # Filtre par mode de paiement
+    if mode_filtre and mode_filtre != 'Tous':
+        factures = factures.filter(mode_paiement__icontains=mode_filtre)
+
+    # Statistiques de la session (Ventes du jour même)
+    aujourdhui = timezone.now().date()
+    ventes_du_jour = Facture.objects.filter(utilisateur=request.user, date_facture__date=aujourdhui, statut='valide')
+    
+    total_especes = ventes_du_jour.filter(mode_paiement='espèces').aggregate(Sum('montant_ttc'))['montant_ttc__sum'] or 0
+    total_carte = ventes_du_jour.filter(mode_paiement='cb').aggregate(Sum('montant_ttc'))['montant_ttc__sum'] or 0
+    total_cheque = ventes_du_jour.filter(mode_paiement='chèque').aggregate(Sum('montant_ttc'))['montant_ttc__sum'] or 0
+    net_session = total_especes + total_carte + total_cheque
+
+    context = {
+        'factures': factures,
+        'count_session': ventes_du_jour.count(),
+        'total_especes': total_especes,
+        'total_carte': total_carte,
+        'total_cheque': total_cheque,
+        'net_session': net_session,
+        'active_menu': 'facturations',
+        'query': query,
+        'mode_filtre': mode_filtre,
+    }
+    return render(request, 'facturation/facturations_caissier.html', context)
+
+def caissier_graphiques(request):
+    if request.session.get('role') != 'caissier':
+        return redirect('login_caissier')
+
+    aujourdhui = timezone.now().date()
+    # On filtre tout par l'utilisateur connecté et la date du jour
+    base_query = Facture.objects.filter(utilisateur=request.user, date_facture__date=aujourdhui, statut='valide')
+
+    # 1. Calcul des indicateurs (Cards)
+    stats = base_query.aggregate(
+        panier_moyen=Avg('montant_ttc'),
+        total_ventes=Sum('montant_ttc'),
+        nb_factures=Count('id'),
+        nb_clients_fidele=Count('client', filter=Q(client__isnull=False))
+    )
+
+    # Calcul du taux de fidélité
+    taux_fidelite = 0
+    if stats['nb_factures'] > 0:
+        taux_fidelite = (stats['nb_clients_fidele'] / stats['nb_factures']) * 100
+
+    # 2. Ventes par Heure (Histogramme)
+    ventes_par_heure = base_query.annotate(heure=TruncHour('date_facture')) \
+        .values('heure') \
+        .annotate(total=Sum('montant_ttc')) \
+        .order_by('heure')
+
+    # Préparation des données pour l'affichage (on cherche le max pour l'échelle relative)
+    max_vente_heure = max([v['total'] for v in ventes_par_heure], default=1)
+    for v in ventes_par_heure:
+        v['percent'] = (v['total'] / max_vente_heure) * 100
+
+    # 3. Répartition par Catégorie (Donut)
+    repartition_cat = LigneFacture.objects.filter(
+        facture__utilisateur=request.user, 
+        facture__date_facture__date=aujourdhui
+    ).values('article__categorie__nom').annotate(total=Sum('total_ttc')).order_by('-total')
+
+    total_cat = sum([c['total'] for c in repartition_cat])
+    for c in repartition_cat:
+        c['percent'] = (c['total'] / total_cat * 100) if total_cat > 0 else 0
+
+    context = {
+        'stats': stats,
+        'taux_fidelite': taux_fidelite,
+        'ventes_par_heure': ventes_par_heure,
+        'repartition_cat': repartition_cat,
+        'total_session': total_cat,
+        'active_menu': 'graphiques',
+    }
+    return render(request, 'facturation/graphiques_caissier.html', context)
+
+
+# ========================[ fin vue gestion des caissiers ]=====================
 
 # ========================[ Vues pour la gestion des deconnexions ]==============
 
@@ -724,26 +1228,6 @@ def logout_user(request):
 
 # =========================[ fin des vues de deconnexion ]=======================
 
-
-# =========================[ vues pour les caissiers ]===========================
-
-def login_caissier(request):
-    error = None
-    if request.method == "POST":
-        emp_id = request.POST.get('employee-id')
-        pin = request.POST.get('pin-code')
-
-        # Test simple des identifiants caissier
-        if emp_id == "EMP-001" and pin == "1234":
-            
-            return redirect('home') 
-        else:
-            error = "Identifiant ou Code PIN incorrect."
-
-    return render(request, 'facturation/login_caissier.html', {'error': error})
-
-
-# =========================[ fin des vues pour les caissiers ]====================
 
 # =========================[ vues pour les clients ]==============================
 
@@ -775,7 +1259,6 @@ def register_client(request):
                     )
                     
                     # Création du profil dans notre table Client (PostgreSQL)
-                    # On extrait une partie de l'email pour le nom par défaut
                     default_name = email.split('@')[0]
                     Client.objects.create(
                         nom=default_name.upper(),
@@ -802,19 +1285,139 @@ def login_client(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
 
-        # Authentification de l'utilisateur
-        user = authenticate(request, username=email, password=password)
+        # --- Recherche du username via l'email ---
+        try:
+            # On cherche l'utilisateur qui possède cet e-mail en base de données
+            user_db = User.objects.get(email=email)
+            username_to_authenticate = user_db.username
+        except User.DoesNotExist:
+            # Si l'e-mail n'existe pas, authenticate() renverra None plus bas
+            username_to_authenticate = email
+
+        # --- Authentification ---
+        user = authenticate(request, username=username_to_authenticate, password=password)
 
         if user is not None:
-            login(request, user)
-            success = True 
+            # --- VERIFICATION : Est-ce un client, un admin ou un staff ? ---
+            if hasattr(user, 'client') or user.is_superuser or user.is_staff:
+                login(request, user)
+                
+                # On définit le rôle pour les accès aux pages
+                request.session['role'] = 'client' 
+                
+                success = True
+                return render(request, 'facturation/login_client.html', {
+                    'error': error,
+                    'success': success
+                })
+            else:
+                # Cas où le mot de passe est juste, mais le compte n'est lié à rien
+                error = "Cet utilisateur n'est pas enregistré comme un client."
         else:
+            # Mauvais email ou mauvais mot de passe
             error = "Identifiants invalides. Veuillez vérifier votre e-mail et mot de passe."
 
+    # Retour classique en cas de chargement simple ou d'erreur
     return render(request, 'facturation/login_client.html', {
         'error': error,
         'success': success
     })
+
+
+def client_dashboard(request):
+    if request.session.get('role') != 'client':
+        return redirect('login_client')
+
+    # Récupérer l'objet Client lié à l'utilisateur connecté
+    try:
+        client = Client.objects.get(user=request.user)
+    except Client.DoesNotExist:
+        return HttpResponse("Profil client non trouvé. Veuillez contacter l'administration.")
+
+    # Statistiques réelles basées sur la base de données
+    factures = Facture.objects.filter(client=client).order_by('-date_facture')
+    total_depense = factures.aggregate(Sum('montant_ttc'))['montant_ttc__sum'] or 0
+    
+    # 1 point de fidélité tous les 100 FCFA dépensés
+    points_fidelite = int(total_depense / 100) 
+    
+    # On considère ici les factures 'en_attente' (si tu as ce statut)
+    factures_a_regler = factures.filter(statut='en_attente').count()
+
+    context = {
+        'client': client,
+        'factures_recentes': factures[:5], 
+        'total_depense': total_depense,
+        'points': points_fidelite,
+        'factures_a_regler': factures_a_regler,
+        'today': timezone.now(), 
+        'active_menu': 'dashboard'
+    }
+    return render(request, 'facturation/dashboard_client.html', context)
+
+def achats_client(request):
+    if request.session.get('role') != 'client':
+        return redirect('login_client')
+
+    # On récupère les infos du client et tous les articles actifs
+    client = Client.objects.get(user=request.user)
+    articles = Article.objects.filter(actif=True).select_related('categorie')
+
+    return render(request, 'facturation/achats_client.html', {
+        'client': client,
+        'articles': articles,
+        'active_menu': 'achats' 
+    })
+
+
+def client_stocks(request):
+    if request.session.get('role') != 'client':
+        return redirect('login_client')
+
+    client = Client.objects.get(user=request.user)
+
+    # On récupère tous les produits achetés par ce client
+    # On groupe par article pour avoir le total des quantités et la date du dernier achat
+    mes_produits = LigneFacture.objects.filter(facture__client=client)\
+        .values('article__nom', 'article__code_barres', 'article__categorie__nom', 'article__unite_mesure')\
+        .annotate(
+            quantite_totale=Sum('quantite'),
+            dernier_achat=Max('facture__date_facture')
+        ).order_by('-dernier_achat')
+
+    return render(request, 'facturation/stocks_client.html', {
+        'client': client,
+        'stocks': mes_produits,
+        'active_menu': 'stocks'
+    })
+
+def facturations_client(request):
+    if request.session.get('role') != 'client':
+        return redirect('login_client')
+    
+    # On récupère les infos du client réel
+    client = Client.objects.get(user=request.user)
+    
+    # Filtrage par recherche
+    query = request.GET.get('q')
+    factures = Facture.objects.filter(client=client).order_by('-date_facture')
+    if query:
+        factures = factures.filter(numero_facture__icontains=query)
+
+    # Calcul des points (1 point par 1000 FCFA par exemple)
+    total_achats = factures.aggregate(Sum('montant_ttc'))['montant_ttc__sum'] or 0
+    points = int(total_achats / 1000)
+
+    # Création du contexte pour le template
+    context = {
+        'client': client,
+        'factures': factures,
+        'points': points,
+        'active_menu': 'facturations', 
+        'query': query
+    }
+    
+    return render(request, 'facturation/facturations_client.html', context)
 
 
 # =========================[ fin des vues pour les clients ]=======================

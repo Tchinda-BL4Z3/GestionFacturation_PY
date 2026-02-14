@@ -1,0 +1,123 @@
+{% extends 'layouts/caissierLayout.html' %}
+
+{% block content %}
+<header class="h-16 border-b border-white/5 flex items-center justify-between px-8 shrink-0 bg-background-dark/50 backdrop-blur-sm">
+    <div class="flex items-center gap-4">
+        <h2 class="text-lg font-bold">Terminal de Vente (POS)</h2>
+        <div class="h-4 w-px bg-white/10"></div>
+        <span class="text-xs text-slate-400 font-medium">Session : {{ user.username }}</span>
+    </div>
+    <div class="flex items-center gap-6">
+        <!-- Formulaire Scan -->
+        <form method="POST" class="relative">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500 text-lg">barcode_scanner</span>
+            <input name="barcode" autofocus class="bg-surface-dark border-white/10 rounded-full text-sm pl-10 pr-4 py-2 w-80 focus:ring-electric-blue outline-none" placeholder="Scanner un article..." type="text"/>
+        </form>
+    </div>
+</header>
+
+<div class="flex-1 flex overflow-hidden">
+    <!-- Zone Panier -->
+    <div class="flex-1 flex flex-col p-6 overflow-hidden">
+        <div class="bg-surface-dark/60 backdrop-blur-md rounded-2xl border border-white/5 flex flex-col h-full shadow-2xl">
+            <div class="p-4 border-b border-white/5 flex items-center justify-between">
+                <h3 class="font-bold flex items-center gap-2 text-white">
+                    <span class="material-symbols-outlined text-electric-blue">list_alt</span>
+                    Articles dans le panier ({{ panier|length }})
+                </h3>
+            </div>
+            <div class="flex-1 overflow-y-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="sticky top-0 bg-surface-dark z-10">
+                        <tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-white/5">
+                            <th class="px-6 py-4">Désignation</th>
+                            <th class="px-6 py-4 text-center">Qté</th>
+                            <th class="px-6 py-4 text-right">Unit. HT</th>
+                            <th class="px-6 py-4 text-right">Total TTC</th>
+                            <th class="px-6 py-4 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for id, item in panier.items %}
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-white uppercase">{{ item.nom }}</span>
+                                    <span class="text-[10px] text-slate-500">REF: {{ item.code }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <form method="POST" class="inline-flex items-center bg-black/40 rounded-lg border border-white/10 p-1">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="article_id" value="{{ id }}">
+                                    <input type="hidden" name="action" value="update">
+                                    <button name="op" value="moins" class="size-6 flex items-center justify-center hover:bg-white/10 rounded">-</button>
+                                    <span class="w-8 text-center font-bold">{{ item.quantite|stringformat:"02d" }}</span>
+                                    <button name="op" value="plus" class="size-6 flex items-center justify-center hover:bg-white/10 rounded">+</button>
+                                </form>
+                            </td>
+                            <td class="px-6 py-4 text-right font-mono">{{ item.prix }}</td>
+                            <td class="px-6 py-4 text-right font-black text-neon-blue">{{ total_item }} {% comment %} Calculé via tag ou JS {% endcomment %}</td>
+                            <td class="px-6 py-4 text-center">
+                                <form method="POST">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="article_id" value="{{ id }}">
+                                    <button type="submit" class="material-symbols-outlined text-slate-600 hover:text-red-500">delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Paiement -->
+    <div class="w-96 bg-surface-dark/40 backdrop-blur-xl border-l border-white/5 flex flex-col">
+        <div class="p-6 border-b border-white/5">
+            <label class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Client sélectionné</label>
+            <div class="flex items-center gap-3 p-4 bg-black/40 rounded-2xl border border-white/5">
+                <div class="size-10 rounded-full bg-electric-blue/20 flex items-center justify-center text-electric-blue">
+                    <span class="material-symbols-outlined">person</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold">Client Occasionnel</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1 p-8 space-y-6">
+            <div class="space-y-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-500">Sous-total HT</span>
+                    <span class="font-bold">{{ sous_total|floatformat:0 }} FCFA</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-500">TVA Collectée</span>
+                    <span class="font-bold">{{ total_tva|floatformat:0 }} FCFA</span>
+                </div>
+            </div>
+
+            <div class="neon-glow bg-black p-8 rounded-3xl flex flex-col items-center justify-center gap-1 border-2 border-neon-blue/30">
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Net à payer</span>
+                <span class="text-5xl font-black neon-text tracking-tighter">{{ total_ttc|floatformat:0 }}</span>
+                <span class="text-xs font-bold text-neon-blue/50 uppercase">FCFA</span>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <form action="{% url 'valider_encaissement' %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="w-full bg-electric-blue hover:bg-blue-600 text-white py-6 rounded-2xl font-black text-xl flex items-center justify-center gap-3 shadow-2xl transition-all active:scale-95">
+                    <span class="material-symbols-outlined text-3xl">payments</span>
+                    ENCAISSER
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'layouts/caissierLayout.html' %}
+{% load custom_filters %}
+
+{% block content %}
+<header class="h-16 border-b border-white/5 flex items-center justify-between px-8 shrink-0 bg-background-dark/50 backdrop-blur-sm">
+    <h2 class="text-lg font-bold">Gestion des Clients & Fidélité</h2>
+    <div class="flex items-center gap-4">
+        <form method="GET" class="relative w-80">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg">search</span>
+            <input name="q" value="{{ request.GET.q|default:'' }}" class="w-full bg-surface-dark border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-electric-blue outline-none" placeholder="Rechercher (Nom, Tél...)" type="text"/>
+        </form>
+        <a href="/admin/facturation/client/add/" class="bg-electric-blue hover:bg-blue-600 text-white text-[10px] font-black py-2.5 px-4 rounded-lg transition-colors flex items-center gap-2 uppercase tracking-widest">
+            <span class="material-symbols-outlined text-sm">person_add</span> Enregistrer Client
+        </a>
+    </div>
+</header>
+
+<div class="flex-1 overflow-y-auto p-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for client in clients %}
+        <div class="bg-surface-dark/80 backdrop-blur-md border border-white/5 rounded-2xl p-6 hover:border-electric-blue/50 transition-all group">
+            <div class="flex justify-between items-start mb-6">
+                <div class="flex items-center gap-4">
+                    <div class="size-12 rounded-xl bg-electric-blue/20 flex items-center justify-center text-electric-blue font-bold text-lg">
+                        {{ client.nom|slice:":1" }}{{ client.prenom|slice:":1" }}
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white group-hover:text-electric-blue transition-colors">{{ client.prenom }} {{ client.nom }}</h3>
+                        <p class="text-xs text-slate-500">{{ client.telephone|default:"Pas de téléphone" }}</p>
+                    </div>
+                </div>
+                
+                {# Badge de fidélité dynamique #}
+                {% if client.total_achats > 500000 %}
+                    <div class="bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full text-[9px] font-black border border-amber-500/20 uppercase">OR</div>
+                {% elif client.total_achats > 100000 %}
+                    <div class="bg-neon-blue/10 text-neon-blue px-3 py-1 rounded-full text-[9px] font-black border border-neon-blue/20 uppercase">PREMIUM</div>
+                {% else %}
+                    <div class="bg-slate-500/10 text-slate-400 px-3 py-1 rounded-full text-[9px] font-black border border-slate-500/20 uppercase">STANDARD</div>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-background-dark/50 p-3 rounded-xl border border-white/5">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-1">Points Fidélité</p>
+                    <p class="text-xl font-extrabold text-neon-blue">{{ client.total_achats|default:0|divide_by:100|floatformat:0 }} <span class="text-[10px] text-slate-400 font-normal ml-1">pts</span></p>
+                </div>
+                <div class="bg-background-dark/50 p-3 rounded-xl border border-white/5">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-1">Total Achats</p>
+                    <p class="text-xl font-extrabold text-white">{{ client.total_achats|default:0|floatformat:0 }} <span class="text-[9px] text-slate-400 font-normal ml-1">FCFA</span></p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <p class="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Dernière Transaction</p>
+                <div class="flex items-center justify-between text-xs">
+                    <span class="text-slate-300 font-mono">{{ client.derniere_fac|default:"AUCUNE" }}</span>
+                    <span class="text-slate-500 italic">{{ client.date_dernier|date:"d M Y"|default:"Jamais" }}</span>
+                </div>
+                <div class="flex gap-2 mt-4 pt-4 border-t border-white/5">
+                    <button class="flex-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black py-2.5 rounded transition-colors uppercase tracking-widest">Historique</button>
+                    <a href="/admin/facturation/client/{{ client.id }}/change/" class="flex-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black py-2.5 rounded transition-colors uppercase tracking-widest text-center">Éditer</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-20 text-center">
+            <p class="text-slate-500 font-bold uppercase tracking-widest text-xs">Aucun client trouvé.</p>
+        </div>
+        {% endfor %}
+
+        <!-- Carte d'ajout rapide -->
+        <a href="/admin/facturation/client/add/" class="border-2 border-dashed border-white/5 rounded-2xl p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-electric-blue/40 transition-all min-h-[250px] bg-white/[0.02]">
+            <div class="size-14 rounded-full bg-surface-dark flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-slate-500 group-hover:text-electric-blue">person_add</span>
+            </div>
+            <h3 class="font-bold text-slate-400 group-hover:text-white mb-2 uppercase text-xs tracking-widest">Nouveau Client</h3>
+            <p class="text-[10px] text-slate-500 px-10">Inscrivez un client pour le programme de fidélité.</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

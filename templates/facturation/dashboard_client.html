@@ -1,0 +1,95 @@
+{% extends 'layouts/clientLayout.html' %}
+{% load static %}
+
+{% block content %}
+<header class="h-16 border-b border-white/5 flex items-center justify-between px-8 shrink-0 bg-black/20 backdrop-blur-sm">
+    <h2 class="text-lg font-bold">Tableau de bord Client</h2>
+    <div class="text-right">
+        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Compte Actif</p>
+        <p class="text-xs font-bold text-white">{{ today|date:"d F Y" }}</p>
+    </div>
+</header>
+
+<div class="flex-1 overflow-y-auto p-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- CARTE BANCAIRE VIRTUELLE -->
+        <div class="lg:col-span-2 space-y-4">
+            <div class="bg-gradient-to-br from-blue-700 to-black rounded-3xl p-8 relative overflow-hidden shadow-2xl border border-white/10 h-72 flex flex-col justify-between">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-neon-blue/10 rounded-full -mr-20 -mt-20 blur-3xl"></div>
+                <div class="flex justify-between items-start relative z-10">
+                    <div>
+                        <p class="text-[10px] font-bold tracking-widest text-white/60 uppercase">Portefeuille Virtuel</p>
+                        <h3 class="text-2xl font-bold text-white"> {{ client.nom }}</h3>
+                    </div>
+                    <span class="material-symbols-outlined text-4xl text-white/40">contactless</span>
+                </div>
+                <div class="relative z-10">
+                    <p class="text-[10px] text-neon-blue uppercase font-bold mb-1">Solde Disponible</p>
+                    <p class="text-5xl font-black text-neon-blue drop-shadow-[0_0_10px_rgba(0,242,255,0.3)]">
+                        {{ client.solde|floatformat:0 }} <span class="text-xl">FCFA</span>
+                    </p>
+                    <div class="flex justify-between items-center mt-6">
+                        <p class="font-mono text-lg tracking-widest text-white/80">**** **** **** {{ client.id|stringformat:"04d" }}</p>
+                        <div class="flex -space-x-2">
+                            <div class="size-8 rounded-full bg-red-500/80"></div>
+                            <div class="size-8 rounded-full bg-amber-500/80 backdrop-blur-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS FIDELITE -->
+        <div class="space-y-6">
+            <div class="bg-surface-dark/60 backdrop-blur-md p-6 rounded-2xl border border-white/5 flex items-center gap-4">
+                <div class="size-12 bg-amber-500/20 rounded-xl flex items-center justify-center text-amber-500">
+                    <span class="material-symbols-outlined text-2xl">stars</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Points de Fidélité</p>
+                    <p class="text-2xl font-black text-white">{{ points }} pts</p>
+                    <p class="text-[10px] text-emerald-400 font-bold">Statut: {% if points > 1000 %}VIP Gold{% else %}Standard{% endif %}</p>
+                </div>
+            </div>
+            <div class="bg-surface-dark/60 backdrop-blur-md p-6 rounded-2xl border border-white/5 flex items-center gap-4">
+                <div class="size-12 bg-red-500/20 rounded-xl flex items-center justify-center text-red-500">
+                    <span class="material-symbols-outlined text-2xl">pending_actions</span>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Factures à régler</p>
+                    <p class="text-2xl font-black text-white">{{ factures_a_regler|stringformat:"02d" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DERNIERS ACHATS -->
+    <div class="bg-surface-dark/60 backdrop-blur-md rounded-2xl border border-white/5 overflow-hidden">
+        <div class="p-6 border-b border-white/5 flex items-center justify-between">
+            <h3 class="font-bold flex items-center gap-2 text-white">
+                <span class="material-symbols-outlined text-electric-blue">receipt_long</span> Derniers Achats
+            </h3>
+        </div>
+        <table class="w-full text-left text-sm">
+            <thead>
+                <tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-white/5">
+                    <th class="px-6 py-4">Date</th>
+                    <th class="px-6 py-4">N° Facture</th>
+                    <th class="px-6 py-4 text-right">Montant</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+                {% for f in factures_recentes %}
+                <tr class="hover:bg-white/5">
+                    <td class="px-6 py-4 text-slate-400">{{ f.date_facture|date:"d M Y" }}</td>
+                    <td class="px-6 py-4 font-bold text-neon-blue">{{ f.numero_facture }}</td>
+                    <td class="px-6 py-4 text-right font-mono font-bold text-white">{{ f.montant_ttc|floatformat:0 }} FCFA</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="p-10 text-center text-slate-500">Aucun achat récent.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

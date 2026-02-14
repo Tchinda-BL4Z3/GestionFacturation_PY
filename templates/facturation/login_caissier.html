@@ -45,6 +45,15 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .hero-gradient { background: radial-gradient(circle at center, rgba(37, 99, 235, 0.08) 0%, transparent 70%); }
+        
+        /* Animation du Modal */
+        .modal-enter {
+            animation: modalFadeIn 0.3s ease-out forwards;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body class="text-white antialiased font-display min-h-screen flex flex-col">
@@ -77,21 +86,24 @@
         </div>
 
         <div class="glass-card p-8 md:p-10 rounded-3xl shadow-2xl">
-            <!-- Message d'erreur -->
-            {% if error %}
-            <div class="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl flex items-center gap-3 text-red-400">
-                <span class="material-symbols-outlined">error</span>
-                <p class="text-xs font-bold">{{ error }}</p>
-            </div>
+            
+            {% if messages %}
+                {% for message in messages %}
+                <div class="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl flex items-center gap-3 text-red-400 animate-pulse">
+                    <span class="material-symbols-outlined">error</span>
+                    <p class="text-xs font-bold">{{ message }}</p>
+                </div>
+                {% endfor %}
             {% endif %}
 
-            <form class="space-y-6" method="POST">
+            <!-- ID du formulaire ajouté pour le script JS -->
+            <form id="loginForm" class="space-y-6" method="POST">
                 {% csrf_token %}
                 <div class="space-y-2">
                     <label class="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1" for="employee-id">Identifiant Employé</label>
                     <div class="relative">
                         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">badge</span>
-                        <input class="w-full bg-surface-dark border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue transition-all outline-none" id="employee-id" name="employee-id" placeholder="Ex: EMP-123" type="text" required/>
+                        <input class="w-full bg-surface-dark border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue transition-all outline-none" id="employee-id" name="username" placeholder="Ex: caissier1" type="text" required/>
                     </div>
                 </div>
 
@@ -99,12 +111,13 @@
                     <label class="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1" for="pin-code">Code PIN Numérique</label>
                     <div class="relative">
                         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-xl">lock</span>
-                        <input class="w-full bg-surface-dark border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue transition-all outline-none tracking-[0.5em] font-bold text-lg" id="pin-code" inputmode="numeric" maxlength="4" name="pin-code" placeholder="••••" type="password" required/>
+                        <input class="w-full bg-surface-dark border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue transition-all outline-none tracking-[0.5em] font-bold text-lg" id="pin-code" inputmode="numeric" maxlength="4" name="password" placeholder="••••" type="password" required/>
                     </div>
                 </div>
 
                 <div class="pt-2">
-                    <button class="w-full bg-electric-blue hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-electric-blue/20 transition-all flex items-center justify-center gap-2 group" type="submit">
+                    <!-- Changement en type="button" pour déclencher le modal -->
+                    <button type="button" onclick="showConfirmation()" class="w-full bg-electric-blue hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-electric-blue/20 transition-all flex items-center justify-center gap-2 group">
                         <span>Ouvrir la Caisse</span>
                         <span class="material-symbols-outlined text-xl group-hover:translate-x-1 transition-transform">login</span>
                     </button>
@@ -120,6 +133,31 @@
     </div>
 </main>
 
+<!-- FENÊTRE DE CONFIRMATION (MODAL) -->
+<div id="confirmModal" class="fixed inset-0 z-[100] hidden items-center justify-center px-6 bg-background-dark/80 backdrop-blur-xl">
+    <div class="glass-card w-full max-w-sm rounded-3xl p-8 shadow-2xl modal-enter border-white/10">
+        <div class="text-center">
+            <div class="size-16 bg-amber-500/10 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 border border-amber-500/20">
+                <span class="material-symbols-outlined text-3xl">vitals</span>
+            </div>
+            <h3 class="text-xl font-extrabold text-white mb-3">Confirmer l'ouverture ?</h3>
+            <p class="text-slate-400 text-sm mb-8 leading-relaxed">
+                Vous êtes sur le point d'ouvrir une session de vente sur ce terminal. <br>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-tighter mt-2 block">Vérifiez vos identifiants avant de valider.</span>
+            </p>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="hideConfirmation()" class="py-3.5 px-6 rounded-xl border border-white/10 text-slate-400 font-bold text-xs uppercase tracking-widest hover:bg-white/5 transition-all">
+                    Annuler
+                </button>
+                <button onclick="submitForm()" class="py-3.5 px-6 rounded-xl bg-electric-blue text-white font-black text-xs uppercase tracking-widest hover:bg-blue-600 shadow-lg shadow-electric-blue/20 transition-all">
+                    Confirmer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <footer class="border-t border-border-dark bg-surface-dark/30 py-8">
     <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
         <div class="flex items-center gap-3 opacity-40">
@@ -131,6 +169,49 @@
         <div class="text-slate-600 text-[10px] font-bold uppercase tracking-widest">© 2026 SUPER-FACTU POS • TERMINAL SÉCURISÉ</div>
     </div>
 </footer>
+
+<script>
+    const modal = document.getElementById('confirmModal');
+    const form = document.getElementById('loginForm');
+
+    function showConfirmation() {
+        // On vérifie si les champs sont remplis avant d'afficher le modal
+        const user = document.getElementById('employee-id').value;
+        const pin = document.getElementById('pin-code').value;
+
+        if (user && pin) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            document.body.style.overflow = 'hidden'; // Empêche le scroll en arrière-plan
+        } else {
+            // Si vide, on laisse le navigateur afficher les messages HTML5 "required"
+            form.reportValidity();
+        }
+    }
+
+    function hideConfirmation() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = 'auto';
+    }
+
+    function submitForm() {
+        // Changement visuel du bouton pour indiquer le chargement
+        const confirmBtn = event.target;
+        confirmBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span>';
+        confirmBtn.disabled = true;
+        
+        // Envoi du formulaire
+        form.submit();
+    }
+
+    // Fermeture du modal si on clique à l'extérieur (sur le fond flou)
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            hideConfirmation();
+        }
+    }
+</script>
 
 </body>
 </html>

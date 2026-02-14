@@ -1,0 +1,125 @@
+{% extends 'layouts/caissierLayout.html' %}
+{% load static %}
+
+{% block title %}SUPER-FACTU | Statistiques de Vente{% endblock %}
+
+{% block content %}
+<header class="h-16 border-b border-white/5 flex items-center justify-between px-8 shrink-0 bg-black/20 backdrop-blur-sm">
+    <div class="flex items-center gap-2">
+        <h2 class="text-lg font-bold text-white">Analyse des Ventes Individuelles</h2>
+        <span class="text-slate-500 mx-2">/</span>
+        <span class="text-sm text-neon-blue font-bold uppercase tracking-widest">Performance Journée</span>
+    </div>
+    <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2 bg-neon-blue/10 px-3 py-1 rounded-full border border-neon-blue/20">
+            <span class="text-[10px] font-bold text-neon-blue uppercase">Mise à jour en direct</span>
+        </div>
+        <div class="h-8 w-px bg-white/10"></div>
+        <div class="text-right">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">ID Caissier</p>
+            <p class="text-xs font-bold text-white">#{{ request.user.id }}-CS</p>
+        </div>
+    </div>
+</header>
+
+<div class="flex-1 overflow-y-auto p-8 space-y-6">
+    <!-- CARDS INDICATEURS -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-surface-dark/60 border border-white/10 p-4 rounded-xl shadow-lg shadow-blue-500/5">
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Panier Moyen</p>
+            <p class="text-2xl font-black text-white">{{ stats.panier_moyen|default:0|floatformat:0 }} <span class="text-xs font-normal text-slate-500">FCFA</span></p>
+            <p class="text-[10px] text-neon-blue mt-1">Sur {{ stats.nb_factures }} ventes</p>
+        </div>
+        <div class="bg-surface-dark/60 border border-white/10 p-4 rounded-xl">
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Total Récolté</p>
+            <p class="text-2xl font-black text-white">{{ stats.total_ventes|default:0|floatformat:0 }} <span class="text-xs font-normal text-slate-500">FCFA</span></p>
+            <p class="text-[10px] text-emerald-400 mt-1">Session active</p>
+        </div>
+        <div class="bg-surface-dark/60 border border-white/10 p-4 rounded-xl">
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Clients Servis</p>
+            <p class="text-2xl font-black text-white">{{ stats.nb_factures }}</p>
+            <p class="text-[10px] text-slate-500 mt-1">Aujourd'hui</p>
+        </div>
+        <div class="bg-surface-dark/60 border border-neon-green/20 p-4 rounded-xl shadow-lg shadow-green-500/5">
+            <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Taux de fidélité</p>
+            <p class="text-2xl font-black text-green-400">{{ taux_fidelite|floatformat:1 }}%</p>
+            <p class="text-[10px] text-green-400/70 mt-1">{{ stats.nb_clients_fidele }} Cartes utilisées</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- HISTOGRAMME DES VENTES -->
+        <div class="lg:col-span-2 bg-surface-dark/60 rounded-2xl border border-white/5 p-6 backdrop-blur-md">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="font-bold text-lg text-white">Affluence & Ventes par Heure</h3>
+                    <p class="text-xs text-slate-400">Volume des encaissements sur la journée</p>
+                </div>
+            </div>
+            <div class="h-64 flex items-end justify-between gap-4 px-2">
+                {% for v in ventes_par_heure %}
+                <div class="flex-1 flex flex-col items-center gap-2 group">
+                    <div class="w-full bg-gradient-to-t from-electric-blue to-neon-blue rounded-t-lg transition-all relative" style="height: {{ v.percent }}%;">
+                        <span class="absolute -top-8 left-1/2 -translate-x-1/2 text-[10px] font-bold text-neon-blue opacity-0 group-hover:opacity-100 transition-opacity">
+                            {{ v.total|floatformat:0 }}
+                        </span>
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">{{ v.heure|date:"H" }}h</span>
+                </div>
+                {% empty %}
+                <div class="w-full h-full flex items-center justify-center text-slate-600 italic text-sm">Pas encore de données pour aujourd'hui</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- REPARTITION CATEGORIES -->
+        <div class="bg-surface-dark/60 rounded-2xl border border-white/5 p-6 flex flex-col backdrop-blur-md">
+            <h3 class="font-bold text-white mb-1">Répartition Ventes</h3>
+            <p class="text-xs text-slate-500 mb-8">Top catégories de la journée</p>
+            
+            <div class="space-y-4 flex-1 overflow-y-auto pr-2 custom-scroll">
+                {% for cat in repartition_cat %}
+                <div class="group">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-300">{{ cat.article__categorie__nom }}</span>
+                        <span class="text-xs font-black text-neon-blue">{{ cat.percent|floatformat:0 }}%</span>
+                    </div>
+                    <div class="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-electric-blue rounded-full" style="width: {{ cat.percent }}%"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-slate-600 text-xs py-10">Aucune vente enregistrée</p>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-white/5">
+                <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Recette Totale</p>
+                <p class="text-xl font-black text-white">{{ total_session|floatformat:0 }} <span class="text-xs font-normal">FCFA</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- OBJECTIF SESSION -->
+    <div class="bg-surface-dark/40 rounded-2xl border border-white/5 p-6 overflow-hidden relative backdrop-blur-sm">
+        <div class="absolute top-0 right-0 p-8 opacity-5">
+            <span class="material-symbols-outlined text-[100px] text-white">military_tech</span>
+        </div>
+        <div class="relative z-10">
+            <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-green-400">stars</span>
+                Objectif de Session : Performance Caissier
+            </h3>
+            <div class="max-w-2xl">
+                <div class="flex justify-between text-[10px] font-bold uppercase mb-2">
+                    <span class="text-slate-400">Progression Chiffre d'Affaires</span>
+                    <span class="text-neon-blue">{{ total_session|floatformat:0 }} / 500 000 FCFA</span>
+                </div>
+                <div class="h-3 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
+                    <div class="h-full bg-gradient-to-r from-electric-blue to-neon-blue" style="width: 25%"></div> <!-- Logique à dynamiser selon l'objectif -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends 'layouts/clientLayout.html' %}
+
+{% block title %}Mon Inventaire Personnel{% endblock %}
+
+{% block content %}
+<header class="h-16 border-b border-[#2d333b] flex items-center justify-between px-8 shrink-0 bg-[#0a0a0c]/50 backdrop-blur-sm">
+    <div class="flex items-center gap-4">
+        <h2 class="text-lg font-bold">Mes Produits Achetés</h2>
+        <span class="px-2.5 py-0.5 rounded-full bg-blue-600/10 border border-blue-600/20 text-[10px] font-bold text-blue-500 uppercase">Stocks Client</span>
+    </div>
+    <div class="flex items-center gap-6">
+        <div class="bg-[#161b22] border border-[#2d333b] px-3 py-1.5 rounded-lg flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm text-blue-500">account_balance_wallet</span>
+            <span class="text-xs font-bold">{{ client.solde }} FCFA</span>
+        </div>
+    </div>
+</header>
+
+<div class="flex-1 overflow-y-auto p-8">
+    <div class="mb-8">
+        <h3 class="text-2xl font-black text-white tracking-tight">Inventaire Personnel</h3>
+        <p class="text-sm text-slate-400 mt-1">Historique de vos consommations cumulées chez SUPER-FACTU.</p>
+    </div>
+
+    <div class="bg-[#161b22] rounded-2xl border border-[#2d333b] overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[11px] uppercase text-slate-500 tracking-widest bg-[#0a0a0c]/30">
+                        <th class="px-8 py-5 font-bold">Produit</th>
+                        <th class="px-8 py-5 font-bold">Catégorie</th>
+                        <th class="px-8 py-5 font-bold">Dernier Achat</th>
+                        <th class="px-8 py-5 font-bold">Quantité Totale</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm">
+                    {% for item in stocks %}
+                    <tr class="border-b border-[#2d333b]/50 hover:bg-white/[0.02] transition-colors">
+                        <td class="px-8 py-5">
+                            <div class="flex items-center gap-4">
+                                <div class="size-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+                                    <span class="material-symbols-outlined">
+                                        {% if item.article__categorie__nom == 'Alimentaire' %}nutrition{% else %}inventory_2{% endif %}
+                                    </span>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-white">{{ item.article__nom }}</p>
+                                    <p class="text-[10px] text-slate-500">REF: {{ item.article__code_barres }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-8 py-5">
+                            <span class="px-2 py-1 rounded text-[10px] font-bold bg-slate-800 text-slate-400 uppercase">
+                                {{ item.article__categorie__nom }}
+                            </span>
+                        </td>
+                        <td class="px-8 py-5 text-slate-400 font-medium">
+                            {{ item.dernier_achat|date:"d M Y" }}
+                        </td>
+                        <td class="px-8 py-5">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg font-bold text-white">{{ item.quantite_totale|floatformat:0 }}</span>
+                                <span class="text-[10px] text-slate-500 uppercase font-bold">{{ item.article__unite_mesure }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-8 py-10 text-center text-slate-500 italic">
+                            Vous n'avez pas encore effectué d'achats.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Stats du bas -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="p-5 bg-[#161b22]/40 border border-[#2d333b] rounded-xl">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="material-symbols-outlined text-blue-500">insights</span>
+                <h4 class="text-xs font-bold uppercase tracking-widest text-slate-300">Total Produits</h4>
+            </div>
+            <p class="text-xl font-extrabold">{{ stocks|length }} Références</p>
+        </div>
+        <div class="p-5 bg-[#161b22]/40 border border-[#2d333b] rounded-xl">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="material-symbols-outlined text-amber-500">history</span>
+                <h4 class="text-xs font-bold uppercase tracking-widest text-slate-300">Fidélité</h4>
+            </div>
+            <p class="text-xl font-extrabold">Membre Actif</p>
+        </div>
+        <div class="p-5 bg-[#161b22]/40 border border-[#2d333b] rounded-xl">
+            <div class="flex items-center gap-3 mb-3">
+                <span class="material-symbols-outlined text-emerald-500">savings</span>
+                <h4 class="text-xs font-bold uppercase tracking-widest text-slate-300">Points Gagnés</h4>
+            </div>
+            <p class="text-xl font-extrabold">{{ client.solde|floatformat:0 }}</p>
+            <p class="text-[10px] text-slate-500 mt-1">Points cumulés</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

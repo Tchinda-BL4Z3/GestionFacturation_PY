@@ -1,0 +1,103 @@
+{% extends 'layouts/caissierLayout.html' %}
+{% load static %}
+
+{% block content %}
+<header class="h-16 border-b border-white/5 flex items-center justify-between px-8 shrink-0 bg-black/20 backdrop-blur-sm">
+    <div class="flex items-center gap-4">
+        <h2 class="text-lg font-bold">Historique de Facturation</h2>
+        <div class="h-6 w-px bg-white/10"></div>
+        <p class="text-xs text-slate-400 font-medium italic">Session de {{ request.user.username }}</p>
+    </div>
+    <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+            <span class="size-2 bg-emerald-500 rounded-full animate-pulse"></span>
+            <span class="text-[10px] font-bold text-emerald-400 uppercase">Session Active</span>
+        </div>
+        <div class="h-8 w-px bg-white/10"></div>
+        <div class="text-right">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">Ventes Aujourd'hui</p>
+            <p class="text-xs font-bold text-white">{{ count_session }} Facture(s)</p>
+        </div>
+    </div>
+</header>
+
+<div class="flex-1 overflow-y-auto p-8">
+    <form method="GET" class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div class="relative w-96">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xl">search</span>
+            <input name="q" value="{{ query }}" class="w-full bg-surface-dark/60 border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:ring-1 focus:ring-electric-blue outline-none" placeholder="Référence facture ou client..."/>
+        </div>
+        <div class="flex items-center gap-3">
+            <select name="mode" onchange="this.form.submit()" class="bg-surface-dark border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none">
+                <option value="Tous">Tous les paiements</option>
+                <option value="espèces" {% if mode_filtre == 'espèces' %}selected{% endif %}>Espèces</option>
+                <option value="cb" {% if mode_filtre == 'cb' %}selected{% endif %}>Carte Bancaire</option>
+                <option value="chèque" {% if mode_filtre == 'chèque' %}selected{% endif %}>Chèque</option>
+            </select>
+        </div>
+    </form>
+
+    <div class="bg-surface-dark/60 rounded-2xl border border-white/5 overflow-hidden backdrop-blur-md shadow-2xl">
+        <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead>
+                <tr class="text-[10px] uppercase text-slate-500 tracking-widest border-b border-white/5 bg-black/30">
+                    <th class="px-6 py-5 font-black">Heure</th>
+                    <th class="px-6 py-5 font-black">Réf. Facture</th>
+                    <th class="px-6 py-5 font-black">Client</th>
+                    <th class="px-6 py-5 font-black text-right">Montant</th>
+                    <th class="px-6 py-5 font-black text-center">Paiement</th>
+                    <th class="px-6 py-5 font-black text-center">État</th>
+                    <th class="px-6 py-5 font-black text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+                {% for f in factures %}
+                <tr class="hover:bg-white/[0.02] transition-colors group">
+                    <td class="px-6 py-4 text-xs font-medium text-slate-400">{{ f.date_facture|date:"H:i" }}</td>
+                    <td class="px-6 py-4 font-bold text-neon-blue">{{ f.numero_facture }}</td>
+                    <td class="px-6 py-4">{{ f.client|default:"Client Occasionnel" }}</td>
+                    <td class="px-6 py-4 text-right font-mono font-bold text-white">{{ f.montant_ttc|floatformat:0 }} FCFA</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400">{{ f.mode_paiement }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="flex items-center justify-center gap-1.5 text-[10px] font-bold {% if f.statut == 'valide' %}text-emerald-400{% else %}text-red-500{% endif %}">
+                            <span class="size-1.5 rounded-full {% if f.statut == 'valide' %}bg-emerald-500{% else %}bg-red-500{% endif %}"></span> {{ f.statut|upper }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <a href="{% url 'imprimer_facture' f.id %}" class="p-1.5 rounded hover:bg-white/10 text-slate-400 hover:text-white" title="Imprimer">
+                                <span class="material-symbols-outlined text-xl">print</span>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="py-20 text-center text-slate-500 italic">Aucune facture enregistrée.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Totaux de Session -->
+    <div class="grid grid-cols-4 gap-4 mt-8">
+        <div class="bg-surface-dark/50 border border-white/5 p-4 rounded-xl">
+            <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Total Espèces</p>
+            <p class="text-xl font-bold font-mono text-emerald-400">{{ total_especes|floatformat:0 }} FCFA</p>
+        </div>
+        <div class="bg-surface-dark/50 border border-white/5 p-4 rounded-xl">
+            <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Total Carte</p>
+            <p class="text-xl font-bold font-mono text-blue-400">{{ total_carte|floatformat:0 }} FCFA</p>
+        </div>
+        <div class="bg-surface-dark/50 border border-white/5 p-4 rounded-xl">
+            <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Total Chèques</p>
+            <p class="text-xl font-bold font-mono text-slate-400">{{ total_cheque|floatformat:0 }} FCFA</p>
+        </div>
+        <div class="bg-surface-dark/50 border border-white/5 p-4 rounded-xl">
+            <p class="text-[10px] uppercase font-bold text-slate-500 mb-1">Net Session (Jour)</p>
+            <p class="text-xl font-bold font-mono text-neon-blue">{{ net_session|floatformat:0 }} FCFA</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends 'layouts/caissierLayout.html' %}
+{% load static %}
+
+{% block title %}SUPER-FACTU | Enregistrement Achat{% endblock %}
+
+{% block content %}
+<header class="h-16 border-b border-white/5 flex items-center justify-between px-8 shrink-0 bg-background-dark/50 backdrop-blur-sm">
+    <div class="flex items-center gap-4">
+        <h2 class="text-lg font-bold">Enregistrement Achat Rapide</h2>
+        <span class="text-slate-500 text-sm">/ Approvisionnement urgent</span>
+    </div>
+    <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
+            <span class="material-symbols-outlined text-sm text-neon-blue">bolt</span>
+            <span class="text-[10px] font-bold text-neon-blue uppercase tracking-wider">Mode Express</span>
+        </div>
+    </div>
+</header>
+
+<div class="flex-1 overflow-y-auto p-8 flex flex-col items-center">
+    
+    <!-- Messages d'alerte -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="w-full max-w-2xl mb-4 p-4 rounded-xl {% if message.tags == 'success' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% else %}bg-red-500/10 text-red-400 border border-red-500/20{% endif %} flex items-center gap-3">
+                <span class="material-symbols-outlined">{% if message.tags == 'success' %}check_circle{% else %}error{% endif %}</span>
+                <p class="text-xs font-bold uppercase tracking-widest">{{ message }}</p>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="w-full max-w-2xl bg-surface-dark/80 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+        <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-electric-blue/20 rounded-lg">
+                    <span class="material-symbols-outlined text-electric-blue">add_shopping_cart</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white">Nouvelle Entrée Marchandise</h3>
+                    <p class="text-xs text-slate-500">Mettez à jour le stock physique immédiatement.</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] font-bold text-slate-500 uppercase block">Réf. Achat</span>
+                <span class="text-sm font-mono font-bold text-neon-blue">#{{ ref_achat }}</span>
+            </div>
+        </div>
+
+        <form method="POST" class="p-8 space-y-8">
+            {% csrf_token %}
+            <div class="space-y-6">
+                <!-- Sélection Produit Dynamique -->
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sélection du Produit</label>
+                    <div class="relative group">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">search</span>
+                        <select name="product" required class="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white appearance-none focus:border-electric-blue outline-none transition-all">
+                            <option value="" disabled selected>Choisir un article en stock...</option>
+                            {% for article in articles %}
+                                <option value="{{ article.id }}">{{ article.nom }} (Actuel: {{ article.stock_actuel }})</option>
+                            {% endfor %}
+                        </select>
+                        <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none">expand_more</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Quantité Reçue</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">inventory</span>
+                            <input name="quantity" required class="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:border-electric-blue" placeholder="Ex: 50" type="number">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prix d'Achat HT (Unitaire)</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">payments</span>
+                            <input name="price" required class="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-12 pr-16 text-sm text-white font-mono outline-none focus:border-electric-blue" placeholder="0.00" step="0.01" type="number">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-500">FCFA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Fournisseur (Optionnel)</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">local_shipping</span>
+                        <input name="supplier" class="w-full bg-black/40 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-sm text-white outline-none focus:border-electric-blue" placeholder="Nom du grossiste..." type="text">
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-white/5 flex items-center justify-between gap-4">
+                <button type="button" class="text-[10px] font-black text-slate-500 hover:text-white transition-colors flex items-center gap-2 uppercase tracking-widest">
+                    <span class="material-symbols-outlined text-sm">history</span> Historique
+                </button>
+                <div class="flex gap-3">
+                    <button type="reset" class="px-6 py-3 border border-white/10 rounded-xl text-[10px] font-black text-slate-400 hover:bg-white/5 hover:text-white transition-all uppercase tracking-widest">Annuler</button>
+                    <button type="submit" class="px-8 py-3 bg-electric-blue hover:bg-blue-600 text-white text-[10px] font-black rounded-xl transition-all flex items-center gap-2 shadow-xl shadow-blue-500/20 uppercase tracking-widest">
+                        Valider l'entrée
+                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

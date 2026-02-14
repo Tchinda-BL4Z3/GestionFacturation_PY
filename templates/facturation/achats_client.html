@@ -1,0 +1,73 @@
+{% extends 'layouts/clientLayout.html' %}
+
+{% block title %}Catalogue Produits{% endblock %}
+
+{% block content %}
+<header class="h-16 border-b border-[#2d333b] flex items-center justify-between px-8 shrink-0 bg-[#0a0a0c]/50 backdrop-blur-sm z-10">
+    <div class="flex items-center gap-6">
+        <h2 class="text-lg font-bold">Catalogue Produits</h2>
+        <button class="relative flex items-center justify-center p-2 rounded-lg bg-[#161b22] border border-[#2d333b] hover:border-blue-500/50 transition-all group">
+            <span class="material-symbols-outlined text-blue-500">shopping_cart</span>
+            <span class="absolute -top-1.5 -right-1.5 size-5 bg-blue-600 text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-[#0a0a0c] text-white">0</span>
+            <span class="ml-2 text-xs font-bold text-slate-300 group-hover:text-white">Panier</span>
+        </button>
+    </div>
+    <div class="flex items-center gap-6">
+        <div class="text-right">
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest leading-none">Solde Disponible</p>
+            <p class="text-sm font-black text-cyan-400">{{ client.solde }} FCFA</p>
+        </div>
+    </div>
+</header>
+
+<div class="flex-1 overflow-y-auto p-8 pb-32">
+    <!-- Barre de recherche -->
+    <div class="flex flex-col md:flex-row gap-4 mb-8">
+        <div class="relative flex-1">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">search</span>
+            <input type="text" class="w-full bg-[#161b22] border border-[#2d333b] rounded-xl py-3 pl-12 pr-4 text-sm focus:ring-2 focus:ring-blue-500/50 outline-none" placeholder="Rechercher un article...">
+        </div>
+    </div>
+
+    <!-- Grille des produits dynamiques -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for article in articles %}
+        <div class="bg-[#161b22] border border-[#2d333b] rounded-2xl p-4 card-hover transition-all flex flex-col group">
+            <div class="aspect-square rounded-xl bg-[#0a0a0c] mb-4 flex items-center justify-center relative border border-[#2d333b]/50">
+                <span class="material-symbols-outlined text-5xl {% if article.categorie.nom == 'Alimentaire' %}text-emerald-500{% else %}text-blue-400{% endif %}">
+                    {% if article.categorie.nom == 'Alimentaire' %}nutrition{% else %}inventory_2{% endif %}
+                </span>
+                <div class="absolute top-2 right-2 bg-blue-600/90 text-white text-[9px] font-bold px-2 py-1 rounded">
+                    {{ article.unite_mesure }}
+                </div>
+            </div>
+            <div class="flex-1">
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">{{ article.categorie.nom }}</p>
+                <h4 class="font-bold text-white mb-2 line-clamp-1">{{ article.nom }}</h4>
+                <p class="text-xl font-black text-white">{{ article.prix_ttc|floatformat:2 }} <span class="text-xs text-slate-500">FCFA</span></p>
+            </div>
+            <button class="mt-4 w-full py-2.5 bg-blue-600/10 border border-blue-600/30 text-blue-500 hover:bg-blue-600 hover:text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all">
+                <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                Ajouter
+            </button>
+        </div>
+        {% empty %}
+        <p class="text-slate-500 italic">Aucun produit disponible pour le moment.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Barre Panier flottante -->
+<div class="absolute bottom-0 left-0 right-0 bg-[#161b22]/95 backdrop-blur-md border-t border-[#2d333b] p-4 z-20">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex flex-col">
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Panier (Simulation)</h3>
+            <p class="text-xs text-slate-400">Sélectionnez des articles pour commander</p>
+        </div>
+        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl flex items-center gap-3 transition-all">
+            <span>Passer à la caisse</span>
+            <span class="material-symbols-outlined">arrow_forward</span>
+        </button>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,201 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="dark" lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>{% block title %}SUPER-FACTU | Session Caissier{% endblock %}</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "electric-blue": "#2563eb",
+                        "neon-blue": "#00f2ff",
+                        "background-dark": "#0a0a0c",
+                        "surface-dark": "#161b22",
+                    },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+
+    <style type="text/tailwindcss">
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-image: 
+                linear-gradient(to bottom, rgba(10, 10, 12, 0.8), rgba(10, 10, 12, 0.95)),
+                url("{% static 'img/fond_supermarche.jpeg' %}");
+            background-attachment: fixed;
+            background-size: cover;
+        }
+
+        .sidebar-item-active {
+            background: linear-gradient(90deg, rgba(37, 99, 235, 0.15) 0%, transparent 100%);
+            border-left: 4px solid #2563eb;
+            color: #2563eb !important;
+        }
+
+        .glass-effect {
+            backdrop-filter: blur(12px);
+            background: rgba(22, 27, 34, 0.7);
+        }
+
+        /* Style pour le flou du modal */
+        .modal-blur {
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 10px; }
+    </style>
+    {% block extra_style %}{% endblock %}
+</head>
+
+<body class="text-white antialiased font-display flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR CAISSIER -->
+    <aside class="w-64 bg-surface-dark/95 border-r border-white/5 flex flex-col h-full shrink-0 backdrop-blur-md">
+        <div class="p-8 flex items-center gap-3">
+            <div class="size-9 bg-electric-blue rounded-xl flex items-center justify-center text-white shadow-lg shadow-electric-blue/20">
+                <span class="material-symbols-outlined text-xl">storefront</span>
+            </div>
+            <h1 class="text-white text-lg font-black tracking-tighter uppercase">Super-Factu</h1>
+        </div>
+
+        <nav class="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded-xl {% if active_menu == 'dashboard' %}sidebar-item-active{% endif %}" href="{% url 'dashboard_caissier' %}">
+                <span class="material-symbols-outlined text-[22px]">dashboard</span>
+                <span class="text-sm font-semibold">Tableau de bord</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded-xl {% if active_menu == 'ventes' %}sidebar-item-active{% endif %}" href="{% url 'nouvelle_vente' %}">
+                <span class="material-symbols-outlined text-[22px]">shopping_cart</span>
+                <span class="text-sm font-semibold">Ventes</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded-xl {% if active_menu == 'clients' %}sidebar-item-active{% endif %}" href="{% url 'clients_caissier' %}">
+                <span class="material-symbols-outlined text-[22px]">group</span>
+                <span class="text-sm font-semibold">Clients</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded-xl {% if active_menu == 'achat' %}sidebar-item-active text-electric-blue font-bold{% endif %}" href="{% url 'caissier_achat_rapide' %}">
+                <span class="material-symbols-outlined text-[22px]">shopping_basket</span>
+                <span class="text-sm font-semibold">Achat</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded-xl {% if active_menu == 'stocks' %}sidebar-item-active{% endif %}" href="{% url 'caissier_stocks' %}">
+                <span class="material-symbols-outlined text-[22px]">inventory_2</span>
+                <span class="text-sm font-semibold">Stocks</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded-xl {% if active_menu == 'facturations' %}sidebar-item-active{% endif %}" href="{% url 'caissier_facturations' %}">
+                <span class="material-symbols-outlined text-[22px]">receipt_long</span>
+                <span class="text-sm font-semibold">Facturations</span>
+            </a>
+
+            <a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-white/5 transition-all rounded-xl {% if active_menu == 'graphiques' %}sidebar-item-active{% endif %}" href="{% url 'caissier_graphiques' %}">
+                <span class="material-symbols-outlined text-[22px]">bar_chart</span>
+                <span class="text-sm font-semibold">Graphiques</span>
+            </a>
+        </nav>
+
+        <!-- FOOTER SIDEBAR -->
+        <div class="p-6 mt-auto border-t border-white/5 bg-black/20">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="size-10 rounded-xl bg-gradient-to-br from-electric-blue to-neon-blue flex items-center justify-center text-white font-black text-sm">
+                    {{ request.user.username|slice:":2"|upper }}
+                </div>
+                <div class="overflow-hidden">
+                    <p class="text-xs font-black text-white truncate">{{ request.user.get_full_name|default:request.user.username }}</p>
+                    <p class="text-[9px] text-emerald-500 font-bold uppercase tracking-widest">Session Active</p>
+                </div>
+            </div>
+            <!-- BOUTON DÉCONNEXION MODIFIÉ -->
+            <button type="button" onclick="showLogoutModal()" class="w-full flex items-center justify-center gap-3 px-4 py-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all rounded-xl border border-red-500/20 text-[10px] font-black uppercase tracking-widest">
+                <span class="material-symbols-outlined text-sm">logout</span>
+                Déconnexion
+            </button>
+        </div>
+    </aside>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-20 border-b border-white/5 flex items-center justify-between px-10 shrink-0 glass-effect z-10">
+            <h2 class="text-xl font-black tracking-tight text-white">{% block header_title %}{% endblock %}</h2>
+            
+            <div class="flex items-center gap-8">
+                {% block header_right %}
+                <div class="flex items-center gap-2 bg-emerald-500/10 px-4 py-2 rounded-full border border-emerald-500/20">
+                    <span class="size-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    <span class="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Session Sécurisée</span>
+                </div>
+                <div class="h-10 w-px bg-white/10"></div>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] leading-none mb-1">Date du jour</p>
+                    <p class="text-xs font-black text-white">{% now "d F Y" %}</p>
+                </div>
+                {% endblock %}
+            </div>
+        </header>
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- FENETRE DE CONFIRMATION DE DÉCONNEXION (MODAL) -->
+    <div id="logoutModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 modal-blur overflow-hidden animate-in fade-in duration-300">
+        <div class="bg-surface-dark w-full max-w-sm rounded-3xl border border-white/10 shadow-2xl p-8 text-center transform scale-95 animate-in zoom-in duration-300">
+            <div class="size-20 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mx-auto mb-6">
+                <span class="material-symbols-outlined text-4xl">logout</span>
+            </div>
+            
+            <h3 class="text-xl font-black text-white mb-2">Fin de session ?</h3>
+            <p class="text-slate-400 text-sm font-medium mb-8">Voulez-vous vraiment vous déconnecter de votre espace caissier ?</p>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="hideLogoutModal()" class="py-4 bg-white/5 hover:bg-white/10 text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
+                    Annuler
+                </button>
+                <a href="{% url 'logout_admin' %}" class="py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-red-600/20">
+                    Oui, Quitter
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS DE GESTION DU MODAL -->
+    <script>
+        function showLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function hideLogoutModal() {
+            const modal = document.getElementById('logoutModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Fermer le modal si on clique en dehors de la boîte
+        window.onclick = function(event) {
+            const modal = document.getElementById('logoutModal');
+            if (event.target == modal) {
+                hideLogoutModal();
+            }
+        }
+    </script>
+
+    {% block extra_script %}{% endblock %}
+</body>
+</html>

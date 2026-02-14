@@ -1,0 +1,179 @@
+{% extends 'layouts/caissierLayout.html' %}
+{% load static %}
+
+{% block title %}SUPER-FACTU | Tableau de Bord Caissier{% endblock %}
+
+{% block extra_style %}
+<style>
+    /* On s'assure que le fond d'écran est bien appliqué avec le bon niveau d'opacité */
+    body {
+        background-image: 
+            linear-gradient(to bottom, rgba(10, 10, 12, 0.85), rgba(10, 10, 12, 0.98)),
+            url("{% static 'img/fond_supermarche.jpeg' %}");
+        background-attachment: fixed;
+        background-size: cover;
+    }
+
+    .glass-card {
+        backdrop-filter: blur(16px);
+        background: rgba(22, 27, 34, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .neon-border-blue {
+        border-bottom: 2px solid rgba(0, 242, 255, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block header_title %}Vue d'ensemble de la session{% endblock %}
+
+{% block content %}
+<div class="flex-1 overflow-y-auto p-10">
+    
+    <!-- STATS DE SESSION DYNAMIQUES -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+        
+        <!-- Carte CA Session -->
+        <div class="glass-card p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <span class="material-symbols-outlined text-6xl">account_balance_wallet</span>
+            </div>
+            <div class="flex items-center justify-between mb-6">
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Mon CA Session</span>
+                <span class="material-symbols-outlined text-neon-blue text-3xl">payments</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-4xl font-black text-white">
+                    {{ ca_session|floatformat:0 }} <span class="text-sm font-normal text-slate-500">FCFA</span>
+                </span>
+                <span class="text-[10px] text-emerald-400 mt-2 font-black uppercase tracking-wider flex items-center gap-2">
+                    <span class="size-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                    Cumul des ventes du jour
+                </span>
+            </div>
+        </div>
+
+        <!-- Carte Clients Servis -->
+        <div class="glass-card p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <span class="material-symbols-outlined text-6xl">person_check</span>
+            </div>
+            <div class="flex items-center justify-between mb-6">
+                <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Clients servis</span>
+                <span class="material-symbols-outlined text-neon-blue text-3xl">groups</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-4xl font-black text-white">{{ nb_clients }}</span>
+                <span class="text-[10px] text-slate-500 mt-2 font-black uppercase tracking-wider">Passages en caisse enregistrés</span>
+            </div>
+        </div>
+
+        <!-- Carte Alertes Stocks -->
+        <div class="glass-card p-8 rounded-3xl border-l-4 border-l-amber-500 shadow-2xl relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-amber-500">
+                <span class="material-symbols-outlined text-6xl">inventory</span>
+            </div>
+            <div class="flex items-center justify-between mb-6">
+                <span class="text-[10px] font-black text-amber-500/80 uppercase tracking-[0.2em]">Alertes Stocks</span>
+                <span class="material-symbols-outlined text-amber-500 text-3xl">warning</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-4xl font-black text-white">{{ alertes_stocks|stringformat:"02d" }}</span>
+                <span class="text-[10px] text-amber-500 mt-2 font-black uppercase tracking-wider">Articles en seuil critique</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLEAU DES VENTES RÉCENTES (BD RÉELLE) -->
+    <div class="glass-card rounded-[2rem] shadow-2xl overflow-hidden flex flex-col">
+        <div class="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+            <div class="flex items-center gap-4">
+                <div class="size-10 rounded-xl bg-electric-blue/20 flex items-center justify-center text-electric-blue shadow-inner">
+                    <span class="material-symbols-outlined">history</span>
+                </div>
+                <div>
+                    <h3 class="font-black text-white uppercase tracking-widest text-sm">Historique des ventes</h3>
+                    <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Activité de votre session actuelle</p>
+                </div>
+            </div>
+            <a href="{% url 'nouvelle_vente' %}" class="bg-electric-blue hover:bg-blue-600 text-white text-[10px] font-black py-3.5 px-8 rounded-2xl transition-all shadow-xl shadow-electric-blue/20 flex items-center gap-3 uppercase tracking-widest active:scale-95">
+                <span class="material-symbols-outlined text-lg">add_shopping_cart</span> Démarrer une vente
+            </a>
+        </div>
+
+        <div class="p-0 overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="text-[10px] uppercase text-slate-500 tracking-[0.2em] border-b border-white/5 bg-black/40">
+                        <th class="px-8 py-5 font-black">Heure</th>
+                        <th class="px-8 py-5 font-black">N° Facture</th>
+                        <th class="px-8 py-5 font-black">Client</th>
+                        <th class="px-8 py-5 font-black text-right">Montant Total</th>
+                        <th class="px-8 py-5 font-black text-center">Paiement</th>
+                        <th class="px-8 py-5 font-black text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                    {% for f in factures %}
+                    <tr class="hover:bg-white/[0.04] transition-colors group">
+                        <td class="px-8 py-5 text-xs font-black text-slate-500">
+                            {{ f.date_facture|date:"H:i" }}
+                        </td>
+                        <td class="px-8 py-5 font-black text-neon-blue group-hover:text-white transition-colors">
+                            {{ f.numero_facture }}
+                        </td>
+                        <td class="px-8 py-5">
+                            <div class="flex flex-col">
+                                <span class="text-white font-bold text-xs uppercase">{{ f.client.nom|default:"Passager" }} {{ f.client.prenom|default:"" }}</span>
+                                {% if f.client.id %}
+                                <span class="text-[9px] text-slate-500 font-bold">ID: #CL-{{ f.client.id|stringformat:"03d" }}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-8 py-5 text-right font-black text-white text-base">
+                            {{ f.montant_ttc|floatformat:0 }} <span class="text-[10px] text-slate-600">FCFA</span>
+                        </td>
+                        <td class="px-8 py-5 text-center">
+                            <span class="px-4 py-1.5 rounded-full text-[9px] bg-white/5 text-slate-300 border border-white/10 font-black uppercase tracking-widest">
+                                {{ f.get_mode_paiement_display|default:f.mode_paiement }}
+                            </span>
+                        </td>
+                        <td class="px-8 py-5 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="{% url 'imprimer_facture' f.id %}" target="_blank" class="size-10 inline-flex items-center justify-center rounded-xl bg-white/5 text-slate-500 hover:text-white hover:bg-electric-blue transition-all shadow-sm" title="Imprimer le ticket">
+                                    <span class="material-symbols-outlined text-lg">print</span>
+                                </a>
+                                <button class="size-10 inline-flex items-center justify-center rounded-xl bg-white/5 text-slate-500 hover:text-white hover:bg-white/10 transition-all">
+                                    <span class="material-symbols-outlined text-lg">visibility</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-8 py-32 text-center">
+                            <div class="size-24 bg-white/5 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 text-slate-800 border border-white/5">
+                                <span class="material-symbols-outlined text-6xl">receipt_long</span>
+                            </div>
+                            <h4 class="text-white font-black uppercase tracking-widest text-sm mb-2">Aucune transaction</h4>
+                            <p class="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">Votre historique de vente pour aujourd'hui est vide.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pied de tableau (infos session) -->
+        <div class="p-6 bg-black/40 border-t border-white/5 flex justify-between items-center">
+            <p class="text-[10px] text-slate-600 font-black uppercase tracking-widest">
+                Opérateur : {{ request.user.get_full_name|upper }}
+            </p>
+            <p class="text-[10px] text-slate-600 font-black uppercase tracking-widest">
+                Dernière actualisation : {% now "H:i:s" %}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
